@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="560" viewBox="0 0 400 560">
+  <defs>
+    
+      <pattern id="pat" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+        <polygon points="30,5 35,20 50,20 38,30 42,45 30,36 18,45 22,30 10,20 25,20" fill="none" stroke="#3498DB25" stroke-width="1"/>
+      </pattern>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="560" rx="12" fill="#0a1628"/>
+
+  <!-- Pattern fill -->
+  <rect x="4" y="4" width="392" height="552" rx="10" fill="url(#pat)"/>
+
+  <!-- Border -->
+  <rect x="4" y="4" width="392" height="552" rx="10" fill="none" stroke="#3498DB" stroke-width="3"/>
+
+  <!-- Inner border -->
+  <rect x="14" y="14" width="372" height="532" rx="6" fill="none" stroke="#3498DB40" stroke-width="1"/>
+
+  <!-- Card symbol -->
+  <text x="200" y="260" text-anchor="middle" font-family="monospace" font-size="60" fill="#3498DB" filter="url(#glow)">🎴</text>
+
+  <!-- Label -->
+  <text x="200" y="330" text-anchor="middle" font-family="monospace" font-size="24" font-weight="bold" fill="#3498DB" filter="url(#glow)">R-001</text>
+
+  
+
+  <!-- OripaX watermark -->
+  <text x="200" y="530" text-anchor="middle" font-family="monospace" font-size="10" fill="#3498DB40">OripaX • X Layer</text>
+</svg>

@@ -1,0 +1,49 @@
+{
+  "name": "oripa",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "deploy": "bun run build && wrangler deploy",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply oripax-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply oripax-db --remote",
+    "contracts:compile": "cd contracts && npx hardhat compile --config hardhat.config.cjs",
+    "contracts:test": "cd contracts && npx hardhat test --config hardhat.config.cjs test/OripaX.test.ts",
+    "contracts:deploy": "cd contracts && npx hardhat run scripts/deploy.ts --config hardhat.config.cjs --network xlayer"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.29.1",
+    "@cloudflare/workers-types": "^4.20260317.1",
+    "@types/bun": "latest",
+    "@types/matter-js": "^0.20.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "drizzle-kit": "^0.31.10",
+    "vite": "^8.0.0",
+    "wrangler": "^4.75.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@okxconnect/ui": "^1.9.1",
+    "@tailwindcss/vite": "^4.2.1",
+    "@tanstack/react-query": "^5.90.21",
+    "@tanstack/react-router": "^1.167.4",
+    "@tanstack/react-start": "^1.166.16",
+    "@tsparticles/engine": "^3.9.1",
+    "@tsparticles/react": "^3.0.0",
+    "@tsparticles/slim": "^3.9.1",
+    "drizzle-orm": "^0.45.1",
+    "ethers": "^6.16.0",
+    "gsap": "^3.14.2",
+    "matter-js": "^0.20.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^4.2.1",
+    "zod": "^4.3.6"
+  }
+}

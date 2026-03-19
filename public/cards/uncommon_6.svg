@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="560" viewBox="0 0 400 560">
+  <defs>
+    
+      <pattern id="pat" x="0" y="0" width="50" height="44" patternUnits="userSpaceOnUse">
+        <polygon points="25,2 47,14 47,36 25,44 3,36 3,14" fill="none" stroke="#2ECC7120" stroke-width="1"/>
+      </pattern>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="560" rx="12" fill="#0d2137"/>
+
+  <!-- Pattern fill -->
+  <rect x="4" y="4" width="392" height="552" rx="10" fill="url(#pat)"/>
+
+  <!-- Border -->
+  <rect x="4" y="4" width="392" height="552" rx="10" fill="none" stroke="#2ECC71" stroke-width="3"/>
+
+  <!-- Inner border -->
+  <rect x="14" y="14" width="372" height="532" rx="6" fill="none" stroke="#2ECC7140" stroke-width="1"/>
+
+  <!-- Card symbol -->
+  <text x="200" y="260" text-anchor="middle" font-family="monospace" font-size="60" fill="#2ECC71" filter="url(#glow)">🎴</text>
+
+  <!-- Label -->
+  <text x="200" y="330" text-anchor="middle" font-family="monospace" font-size="24" font-weight="bold" fill="#2ECC71" filter="url(#glow)">U-006</text>
+
+  
+
+  <!-- OripaX watermark -->
+  <text x="200" y="530" text-anchor="middle" font-family="monospace" font-size="10" fill="#2ECC7140">OripaX • X Layer</text>
+</svg>

@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pachinko-bg: #0A0A0F;
+  --color-pachinko-gold: #FFB800;
+  --color-pachinko-pink: #FF2D78;
+  --color-pachinko-blue: #00B4FF;
+  --color-pachinko-purple: #9B59B6;
+  --color-pachinko-green: #00FF88;
+
+  --color-rarity-common: #A0A0A0;
+  --color-rarity-uncommon: #2ECC71;
+  --color-rarity-rare: #3498DB;
+  --color-rarity-ultra-rare: #9B59B6;
+  --color-rarity-secret-rare: #FFB800;
+  --color-rarity-last-one: #FF2D78;
+
+  --font-display: 'Orbitron', sans-serif;
+}
+
+@layer base {
+  body {
+    background: var(--color-pachinko-bg);
+    color: white;
+    font-family: var(--font-display);
+    overflow-x: hidden;
+  }
+}
+
+@utility neon-glow {
+  text-shadow:
+    0 0 7px var(--color-pachinko-gold),
+    0 0 10px var(--color-pachinko-gold),
+    0 0 21px var(--color-pachinko-gold),
+    0 0 42px var(--color-pachinko-gold);
+}
+
+@utility neon-glow-pink {
+  text-shadow:
+    0 0 7px var(--color-pachinko-pink),
+    0 0 10px var(--color-pachinko-pink),
+    0 0 21px var(--color-pachinko-pink);
+}
+
+@utility neon-glow-blue {
+  text-shadow:
+    0 0 7px var(--color-pachinko-blue),
+    0 0 10px var(--color-pachinko-blue),
+    0 0 21px var(--color-pachinko-blue);
+}
+
+@keyframes holographic-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@utility holographic-shimmer {
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.1) 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.1) 70%,
+    transparent 80%
+  );
+  background-size: 200% 100%;
+  animation: holographic-shimmer 3s ease-in-out infinite;
+}
+
+@keyframes led-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@utility led-flicker {
+  animation: led-flicker 0.1s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px currentColor; }
+  50% { box-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
+}
+
+@utility pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

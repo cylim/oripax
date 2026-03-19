@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="560" viewBox="0 0 400 560">
+  <defs>
+    
+      <pattern id="pat" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+        <rect x="0" y="0" width="40" height="40" fill="none" stroke="#A0A0A020" stroke-width="1"/>
+        <line x1="0" y1="0" x2="40" y2="40" stroke="#A0A0A015" stroke-width="1"/>
+      </pattern>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="560" rx="12" fill="#1a1a2e"/>
+
+  <!-- Pattern fill -->
+  <rect x="4" y="4" width="392" height="552" rx="10" fill="url(#pat)"/>
+
+  <!-- Border -->
+  <rect x="4" y="4" width="392" height="552" rx="10" fill="none" stroke="#A0A0A0" stroke-width="3"/>
+
+  <!-- Inner border -->
+  <rect x="14" y="14" width="372" height="532" rx="6" fill="none" stroke="#A0A0A040" stroke-width="1"/>
+
+  <!-- Card symbol -->
+  <text x="200" y="260" text-anchor="middle" font-family="monospace" font-size="60" fill="#A0A0A0" filter="url(#glow)">🎴</text>
+
+  <!-- Label -->
+  <text x="200" y="330" text-anchor="middle" font-family="monospace" font-size="24" font-weight="bold" fill="#A0A0A0" filter="url(#glow)">C-020</text>
+
+  
+
+  <!-- OripaX watermark -->
+  <text x="200" y="530" text-anchor="middle" font-family="monospace" font-size="10" fill="#A0A0A040">OripaX • X Layer</text>
+</svg>

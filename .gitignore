@@ -1,0 +1,46 @@
+# dependencies
+node_modules
+
+# output
+out
+dist
+.output
+*.tgz
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+*.log
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# dotenv / secrets
+.env
+.env.*
+.dev.vars
+*.pem
+*.key
+
+# wrangler local state (D1 data, KV, etc.)
+.wrangler
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# hardhat / contracts
+contracts/node_modules
+contracts/cache
+contracts/artifacts
+contracts/typechain-types
+
+# IDE
+.idea
+.vscode
+
+# OS
+.DS_Store
+Thumbs.db
