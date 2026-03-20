@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getDb } from './db'
-import { getEnv, hasDb } from './env'
+import { getEnv, initEnv, hasDb } from './env'
 import {
   getActiveOripas,
   getOripaById,
@@ -12,6 +12,7 @@ import {
 
 export const fetchActiveOripas = createServerFn({ method: 'GET' }).handler(
   async () => {
+    await initEnv()
     if (!hasDb()) return []
     const env = getEnv()
     const db = getDb(env.DB)
@@ -22,6 +23,7 @@ export const fetchActiveOripas = createServerFn({ method: 'GET' }).handler(
 export const fetchOripaDetail = createServerFn({ method: 'GET' })
   .inputValidator((input: { id: string }) => input)
   .handler(async ({ data }) => {
+    await initEnv()
     if (!hasDb()) throw new Error('Database not available')
     const env = getEnv()
     const db = getDb(env.DB)
@@ -33,6 +35,7 @@ export const fetchOripaDetail = createServerFn({ method: 'GET' })
 export const fetchPoolStatus = createServerFn({ method: 'GET' })
   .inputValidator((input: { id: string }) => input)
   .handler(async ({ data }) => {
+    await initEnv()
     if (!hasDb()) return null
     const env = getEnv()
     const db = getDb(env.DB)
@@ -42,6 +45,7 @@ export const fetchPoolStatus = createServerFn({ method: 'GET' })
 export const fetchUserDraws = createServerFn({ method: 'GET' })
   .inputValidator((input: { address: string }) => input)
   .handler(async ({ data }) => {
+    await initEnv()
     if (!hasDb()) return []
     const env = getEnv()
     const db = getDb(env.DB)
@@ -50,6 +54,7 @@ export const fetchUserDraws = createServerFn({ method: 'GET' })
 
 export const fetchGlobalStats = createServerFn({ method: 'GET' }).handler(
   async () => {
+    await initEnv()
     if (!hasDb()) return { totalDraws: 0, totalLastOneWins: 0, lastOneWinners: [] }
     const env = getEnv()
     const db = getDb(env.DB)
@@ -59,6 +64,7 @@ export const fetchGlobalStats = createServerFn({ method: 'GET' }).handler(
 
 export const fetchRecentDraws = createServerFn({ method: 'GET' }).handler(
   async () => {
+    await initEnv()
     if (!hasDb()) return []
     const env = getEnv()
     const db = getDb(env.DB)

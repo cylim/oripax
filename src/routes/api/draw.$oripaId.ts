@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { getDb } from '~/server/db'
-import { getEnv } from '~/server/env'
+import { getEnv, initEnv } from '~/server/env'
 import { getOripaById, executeDraw, getPoolStatus } from '~/server/oripa.server'
 import { create402Response, verifyX402Payment } from '~/server/x402.server'
 import { mintCardOnChain, mintLastOneOnChain } from '~/server/mint.server'
@@ -10,6 +10,8 @@ export const Route = createFileRoute('/api/draw/$oripaId')({
   server: {
     handlers: {
       GET: async ({ request, params }) => {
+        try {
+        await initEnv()
         const env = getEnv()
         const db = getDb(env.DB)
         const oripaId = parseInt(params.oripaId)
@@ -129,6 +131,12 @@ export const Route = createFileRoute('/api/draw/$oripaId')({
           }),
           { headers: { 'Content-Type': 'application/json' } }
         )
+        } catch (err) {
+          return new Response(
+            JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }),
+            { status: 500, headers: { 'Content-Type': 'application/json' } }
+          )
+        }
       },
     },
   },

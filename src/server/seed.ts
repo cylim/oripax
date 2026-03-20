@@ -1,11 +1,8 @@
 import type { Database } from './db'
-import { cards, oripas } from './schema'
+import { cards } from './schema'
 import { createOripaPool, type CreateOripaConfig } from './oripa.server'
 import { sql } from 'drizzle-orm'
 import { POOL_PRICES } from '~/lib/constants'
-
-// Dynamically import the card catalog (fetched from Pokemon TCG API)
-import catalogData from './card-catalog.json'
 
 interface CatalogCard {
   id: number
@@ -23,10 +20,8 @@ interface CatalogCard {
   originalRarity: string
 }
 
-const catalog = catalogData as CatalogCard[]
-
 // Pick the best card of a given rarity for Last One prizes
-function pickLastOneCard(rarity: string, exclude: number[]): CatalogCard | undefined {
+function pickLastOneCard(catalog: CatalogCard[], rarity: string, exclude: number[]): CatalogCard | undefined {
   return catalog
     .filter(c => c.rarity === rarity && !exclude.includes(c.id))
     .sort((a, b) => (b.attack + b.defense) - (a.attack + a.defense))[0]
@@ -51,7 +46,6 @@ function buildDistribution(
     const available = byRarity[rarity] || []
     if (available.length === 0) continue
 
-    // Distribute slots evenly across available cards, then fill remainder
     let remaining = slotCount
     for (let i = 0; i < available.length && remaining > 0; i++) {
       const count = Math.max(1, Math.round(slotCount / available.length))
@@ -60,7 +54,6 @@ function buildDistribution(
       remaining -= actual
     }
 
-    // If we still have remaining slots, distribute to first cards
     let idx = 0
     while (remaining > 0) {
       distribution.push({ cardId: available[idx % available.length]!.id, rarity, count: 1 })
@@ -79,6 +72,10 @@ export async function seedDatabase(db: Database) {
     return { status: 'already_seeded', cards: 0, oripas: 0 }
   }
 
+  // Lazy-load the 776KB card catalog only when actually seeding
+  const catalogModule = await import('./card-catalog.json')
+  const catalog: CatalogCard[] = (catalogModule.default ?? catalogModule) as CatalogCard[]
+
   if (catalog.length === 0) {
     throw new Error('Card catalog is empty. Run: bun run scripts/fetch-pokemon-cards.ts')
   }
@@ -96,27 +93,27 @@ export async function seedDatabase(db: Database) {
     setName: c.setName,
   }))
 
-  for (let i = 0; i < allCards.length; i += 50) {
-    await db.insert(cards).values(allCards.slice(i, i + 50))
+  // D1 has a limit of ~100 bind params per query, so insert in small batches
+  for (let i = 0; i < allCards.length; i += 10) {
+    await db.insert(cards).values(allCards.slice(i, i + 10))
   }
 
   // --- Pick 3 unique Last One prizes (best cards of each top rarity) ---
   const lastOnePrizeIds: number[] = []
 
-  const ultraLastOne = pickLastOneCard('secret_rare', lastOnePrizeIds)
+  const ultraLastOne = pickLastOneCard(catalog, 'secret_rare', lastOnePrizeIds)
   if (ultraLastOne) lastOnePrizeIds.push(ultraLastOne.id)
 
-  const premiumLastOne = pickLastOneCard('ultra_rare', lastOnePrizeIds)
+  const premiumLastOne = pickLastOneCard(catalog, 'ultra_rare', lastOnePrizeIds)
   if (premiumLastOne) lastOnePrizeIds.push(premiumLastOne.id)
 
-  const starterLastOne = pickLastOneCard('rare', lastOnePrizeIds)
+  const starterLastOne = pickLastOneCard(catalog, 'rare', lastOnePrizeIds)
   if (starterLastOne) lastOnePrizeIds.push(starterLastOne.id)
 
   // Exclude last-one prizes from the regular pools
   const poolCards = catalog.filter(c => !lastOnePrizeIds.includes(c.id))
 
   // --- Pool 1: Starter Box — 1000 slots, $0.01 (represents $50 pool) ---
-  // Heavy on commons/uncommons, some rares, few ultra rares
   const starterPool = poolCards.filter(c =>
     ['common', 'uncommon', 'rare', 'ultra_rare'].includes(c.rarity)
   )
@@ -140,7 +137,6 @@ export async function seedDatabase(db: Database) {
   })
 
   // --- Pool 2: Premium Collection — 500 slots, $0.02 (represents $200 pool) ---
-  // Better odds: fewer commons, more rares and ultra rares
   const premiumPool = poolCards.filter(c =>
     ['common', 'uncommon', 'rare', 'ultra_rare', 'secret_rare'].includes(c.rarity)
   )
@@ -165,7 +161,6 @@ export async function seedDatabase(db: Database) {
   })
 
   // --- Pool 3: Ultra Premium — 200 slots, $0.05 (represents $500 pool) ---
-  // Best cards: no commons, heavy ultra rare and secret rare
   const ultraPool = poolCards.filter(c =>
     ['uncommon', 'rare', 'ultra_rare', 'secret_rare'].includes(c.rarity)
   )
@@ -190,5 +185,3 @@ export async function seedDatabase(db: Database) {
 
   return { status: 'seeded', cards: allCards.length, oripas: 3 }
 }
-
-export { catalog as CARD_CATALOG }

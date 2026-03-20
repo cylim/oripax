@@ -11,15 +11,38 @@ export interface Env {
 }
 
 let _env: Env | null = null
+let _initPromise: Promise<void> | null = null
 
 export function setEnv(env: Env) {
   _env = env
 }
 
+/** Eagerly load Cloudflare Workers env. Call early, await before first getEnv(). */
+export function initEnv(): Promise<void> {
+  if (_initPromise) return _initPromise
+  _initPromise = (async () => {
+    try {
+      const cf = await import('cloudflare:workers')
+      const cfEnv = cf?.env as unknown as Record<string, unknown> | undefined
+      if (cfEnv?.DB) {
+        _env = cfEnv as unknown as Env
+      }
+    } catch {
+      // Not in Cloudflare Workers context
+    }
+  })()
+  return _initPromise
+}
+
+// Fire immediately on module load (non-blocking)
+initEnv()
+
 export function getEnv(): Env {
   if (_env) return _env
+
   const g = globalThis as unknown as { __env?: Env }
   if (g.__env) return g.__env
+
   // Dev fallback — return stub env
   return {
     DB: null as unknown as D1Database,

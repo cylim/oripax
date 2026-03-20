@@ -47,9 +47,9 @@ export async function createOripaPool(db: Database, config: CreateOripaConfig) {
     rarity: slot.rarity,
   }))
 
-  // Insert in batches of 50
-  for (let i = 0; i < slotValues.length; i += 50) {
-    await db.insert(oripaSlots).values(slotValues.slice(i, i + 50))
+  // Insert in small batches (D1 has ~100 bind param limit)
+  for (let i = 0; i < slotValues.length; i += 10) {
+    await db.insert(oripaSlots).values(slotValues.slice(i, i + 10))
   }
 
   return oripa!

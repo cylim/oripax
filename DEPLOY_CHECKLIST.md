@@ -1,102 +1,274 @@
-# OripaX — Manual Steps Checklist
+# OripaX — Setup & Deploy Guide
 
-Everything below requires credentials, accounts, or human action that can't be automated by Claude Code.
+Step-by-step instructions to get OripaX running locally and deployed to production.
 
 ---
 
-## 1. Create Cloudflare D1 Database
+## Prerequisites
+
+- [Bun](https://bun.sh) (package manager & runtime)
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) (`bun add -g wrangler`)
+- A Cloudflare account (free tier works)
+- An OKX wallet with some OKB on X Layer (for contract deployment gas)
+- An [OKX Developer Portal](https://web3.okx.com/onchainos/dev-docs/home/developer-portal) account (for API keys)
+
+---
+
+## Local Development
+
+### 1. Install dependencies
+
+```bash
+bun install
+cd contracts && bun install && cd ..
+```
+
+### 2. Fetch Pokemon card catalog
+
+The card data is already committed in `src/server/card-catalog.json` (1800 cards). To re-fetch or update:
+
+```bash
+bun run scripts/fetch-pokemon-cards.ts
+```
+
+### 3. Set up local D1 database
+
+If this is your first time (no `.wrangler/` directory yet):
+
+```bash
+bun run db:migrate:local
+```
+
+This creates a local SQLite D1 database and applies the schema.
+
+### 4. Seed the local database
+
+Start the dev server first, then seed:
+
+```bash
+# Terminal 1: start dev server
+bun dev
+
+# Terminal 2: seed the database (uses 'dev-secret' in local dev)
+curl -X POST http://localhost:5173/api/admin/seed \
+  -H "Authorization: Bearer dev-secret"
+```
+
+You should see `{"status":"seeded","cards":1800,"oripas":3}`.
+
+If you need to re-seed, delete the local D1 state and re-migrate:
+
+```bash
+rm -rf .wrangler/state
+bun run db:migrate:local
+# Then re-seed via curl
+```
+
+### 5. Run the dev server
+
+```bash
+bun dev
+```
+
+Open http://localhost:3000. You should see:
+
+- The lobby with 3 oripa pools (Starter Box, Premium Collection, Ultra Premium)
+- "Connect Wallet" button in the navbar
+- Click into any oripa to see the pachinko board and draw button
+
+### 6. Test wallet connection (optional for local dev)
+
+The OKX Connect SDK works on localhost. Click "Connect Wallet" to open the OKX modal. You need the OKX Wallet browser extension or mobile app installed.
+
+---
+
+## Production Deployment
+
+### 7. Create OKX Developer Portal API keys
+
+1. Go to [OKX Developer Portal](https://web3.okx.com/onchainos/dev-docs/home/developer-portal)
+2. Create a new project
+3. Generate API credentials — you'll get:
+   - **API Key** (`OKX_API_KEY`)
+   - **Secret Key** (`OKX_SECRET_KEY`)
+   - **Passphrase** (`OKX_PASSPHRASE`) — you set this during creation
+4. Save these securely; you'll need them in step 10
+
+### 8. Deploy smart contract to X Layer
+
+You need a wallet with OKB on X Layer mainnet for gas (~$0.01 per deploy).
+
+```bash
+cd contracts
+DEPLOYER_PRIVATE_KEY=0xYOUR_PRIVATE_KEY npx hardhat run scripts/deploy.ts --config hardhat.config.cjs --network xlayer
+```
+
+Save the deployed contract address. Then update it in two places:
+
+```bash
+# In wrangler.jsonc — update the CONTRACT_ADDRESS var
+# In src/lib/constants.ts — update CONTRACT_ADDRESS
+```
+
+### 9. Set up the payment wallet
+
+Choose a wallet address that will receive USDT payments from draws. Update `PAYMENT_WALLET` in `wrangler.jsonc`.
+
+### 10. Verify USDT contract address
+
+The USDT contract on X Layer is set to `0x1E4a5963aBFD975d8c9021ce480b42188849D41d` in `src/lib/constants.ts`.
+
+Verify this is correct on [OKLink X Layer Explorer](https://www.oklink.com/xlayer/token/0x1E4a5963aBFD975d8c9021ce480b42188849D41d) before production use.
+
+### 11. Create remote D1 database
+
+If you haven't created the remote D1 database yet:
 
 ```bash
 npx wrangler d1 create oripax-db
 ```
 
-Copy the returned `database_id` into `wrangler.jsonc` (replace `"placeholder-update-after-d1-create"`).
+Copy the returned `database_id` into `wrangler.jsonc` (replace the existing one if different).
 
-Then run migrations:
+Then apply migrations to remote:
 
 ```bash
-bun run db:migrate:local    # for local dev
-bun run db:migrate:remote   # for production
+bun run db:migrate:remote
 ```
 
----
+### 12. Set Wrangler secrets
 
-## 2. Deploy Smart Contract to X Layer
-
-You need a funded wallet with some OKB on X Layer for gas.
+These are encrypted and never stored in code:
 
 ```bash
-cd contracts
-DEPLOYER_PRIVATE_KEY=0xYOUR_KEY npx hardhat run scripts/deploy.ts --network xlayer
+wrangler secret put MINTER_PRIVATE_KEY    # Private key for the wallet that mints NFTs on X Layer
+wrangler secret put OKX_API_KEY           # From step 7
+wrangler secret put OKX_SECRET_KEY        # From step 7
+wrangler secret put OKX_PASSPHRASE        # From step 7
+wrangler secret put ADMIN_SECRET          # Any strong random string (used to auth /api/admin/seed)
 ```
 
-After deployment, update these files with the deployed address:
-- `wrangler.jsonc` → `CONTRACT_ADDRESS`
-- `src/lib/constants.ts` → `CONTRACT_ADDRESS`
-
----
-
-## 3. Set Wrangler Secrets
+### 13. Deploy to Cloudflare Workers
 
 ```bash
-wrangler secret put MINTER_PRIVATE_KEY    # Private key for the wallet that mints NFTs
-wrangler secret put OKX_API_KEY           # From OKX Developer Portal
-wrangler secret put OKX_SECRET_KEY        # From OKX Developer Portal
-wrangler secret put OKX_PASSPHRASE        # Set during API key creation
-wrangler secret put ADMIN_SECRET          # Any strong secret for /api/admin/seed
-```
-
----
-
-## 4. Set Payment Wallet
-
-Update `PAYMENT_WALLET` in `wrangler.jsonc` with the wallet address that receives USDT draw payments.
-
----
-
-## 5. Verify USDT Contract Address
-
-The USDT contract address on X Layer is currently set to `0x1E4a5963aBFD975d8c9021ce480b42188849D41d` in `src/lib/constants.ts`. Verify this is correct on [OKLink X Layer Explorer](https://www.oklink.com/xlayer) before going to production.
-
----
-
-## 6. Deploy to Cloudflare Workers
-
-```bash
-bun run build
 bun run deploy
 ```
 
----
+This runs `vite build` then `wrangler deploy`. Note the deployed URL (e.g., `https://oripax.YOUR_SUBDOMAIN.workers.dev`).
 
-## 7. Seed Production Database
+### 14. Seed the production database
+
+Replace the URL and secret with your values:
 
 ```bash
-curl -X POST https://YOUR_WORKER.workers.dev/api/admin/seed \
+curl -X POST https://oripax.YOUR_SUBDOMAIN.workers.dev/api/admin/seed \
   -H "Authorization: Bearer YOUR_ADMIN_SECRET"
 ```
 
----
+Expected response: `{"status":"seeded","cards":1800,"oripas":3}`
 
-## 8. Verify Deployment
+### 15. Verify deployment
 
 ```bash
-curl https://YOUR_WORKER.workers.dev/api/health
-curl https://YOUR_WORKER.workers.dev/api/oripas
+# Health check
+curl https://oripax.YOUR_SUBDOMAIN.workers.dev/api/health
+
+# Should return 3 oripa pools
+curl https://oripax.YOUR_SUBDOMAIN.workers.dev/api/oripas
+
+# Check pool details
+curl https://oripax.YOUR_SUBDOMAIN.workers.dev/api/oripa/1
 ```
 
-Open the app in browser, connect wallet, try a draw.
+Then open the app in a browser:
+
+1. Lobby shows 3 pools (Starter Box $0.01, Premium Collection $0.02, Ultra Premium $0.05)
+2. Click "Connect Wallet" — OKX modal appears
+3. After connecting, navbar shows your address
+4. Navigate to Collection — shows "No cards yet"
+5. Refresh — wallet stays connected (session restore)
+6. Click into an oripa, click Draw — wallet prompts USDT transfer
+7. After approval — pachinko ball drops, card reveals
 
 ---
 
-## 9. Competition Submission (X Layer Developer Challenge)
+## Updating the Database Schema
+
+If you change `src/server/schema.ts`:
+
+```bash
+bun run db:generate              # Generate new migration SQL
+bun run db:migrate:local         # Apply locally
+bun run db:migrate:remote        # Apply to production
+```
+
+---
+
+## Re-fetching Card Data
+
+To refresh the Pokemon card catalog:
+
+```bash
+bun run scripts/fetch-pokemon-cards.ts
+```
+
+Then re-seed the database (delete existing data first or it will skip due to idempotent guard).
+
+---
+
+## Pool Configuration
+
+Pool prices are defined in `src/lib/constants.ts`:
+
+```typescript
+export const POOL_PRICES = {
+  STARTER: 0.01, // represents $50 pool
+  PREMIUM: 0.02, // represents $200 pool
+  ULTRA: 0.05, // represents $500 pool
+};
+```
+
+Pool sizes and card distributions are in `src/server/seed.ts`. After changing either, re-seed.
+
+---
+
+## Environment Variables Reference
+
+### `wrangler.jsonc` vars (public, committed)
+
+| Variable           | Description                        |
+| ------------------ | ---------------------------------- |
+| `XLAYER_RPC`       | X Layer RPC endpoint               |
+| `CONTRACT_ADDRESS` | Deployed OripaX ERC-721 contract   |
+| `PAYMENT_WALLET`   | Wallet that receives USDT payments |
+
+### Wrangler secrets (encrypted, NOT committed)
+
+| Secret               | Description                        |
+| -------------------- | ---------------------------------- |
+| `MINTER_PRIVATE_KEY` | Private key for NFT minting wallet |
+| `OKX_API_KEY`        | OKX Developer Portal API key       |
+| `OKX_SECRET_KEY`     | OKX Developer Portal secret key    |
+| `OKX_PASSPHRASE`     | OKX Developer Portal passphrase    |
+| `ADMIN_SECRET`       | Auth token for `/api/admin/seed`   |
+
+### `src/lib/constants.ts` (committed)
+
+| Constant                | Description                                      |
+| ----------------------- | ------------------------------------------------ |
+| `CONTRACT_ADDRESS`      | Must match wrangler.jsonc                        |
+| `USDT_CONTRACT_ADDRESS` | USDT token on X Layer — verify before production |
+| `POOL_PRICES`           | Draw prices in USDT per pool tier                |
+
+---
+
+## Competition Submission Checklist (X Layer Developer Challenge)
 
 - [ ] Contract deployed on X Layer (chain 196) — save deploy tx hash
 - [ ] At least 1 on-chain transaction (mint) — save tx hash
-- [ ] x402 payment protocol integrated in /api/draw endpoint
+- [ ] x402 payment protocol integrated in `/api/draw` endpoint
 - [ ] OKX Onchain OS APIs used (Wallet Connect, Payment/x402)
-- [ ] GitHub repo is public with README
-- [ ] SKILL.md in repo root
+- [ ] GitHub repo is public with README and SKILL.md
 - [ ] Create project X/Twitter account
 - [ ] Record 2-min demo video: lobby → pick oripa → pay → pachinko ball drop → card reveal → Last One → explorer proof
 - [ ] Reply to @XLayerOfficial announcement thread

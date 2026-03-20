@@ -20,6 +20,7 @@ import { Route as ApiOripaIdRouteImport } from './routes/api/oripa.$id'
 import { Route as ApiMetadataCardIdRouteImport } from './routes/api/metadata.$cardId'
 import { Route as ApiDrawsRecentRouteImport } from './routes/api/draws.recent'
 import { Route as ApiDrawOripaIdRouteImport } from './routes/api/draw.$oripaId'
+import { Route as ApiCardImageCardIdRouteImport } from './routes/api/card-image.$cardId'
 import { Route as ApiAdminSeedRouteImport } from './routes/api/admin.seed'
 import { Route as ApiOripaIdPoolRouteImport } from './routes/api/oripa.$id.pool'
 import { Route as ApiDrawsUserAddressRouteImport } from './routes/api/draws.user.$address'
@@ -79,6 +80,11 @@ const ApiDrawOripaIdRoute = ApiDrawOripaIdRouteImport.update({
   path: '/api/draw/$oripaId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCardImageCardIdRoute = ApiCardImageCardIdRouteImport.update({
+  id: '/api/card-image/$cardId',
+  path: '/api/card-image/$cardId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminSeedRoute = ApiAdminSeedRouteImport.update({
   id: '/api/admin/seed',
   path: '/api/admin/seed',
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/api/stats': typeof ApiStatsRoute
   '/oripa/$id': typeof OripaIdRoute
   '/api/admin/seed': typeof ApiAdminSeedRoute
+  '/api/card-image/$cardId': typeof ApiCardImageCardIdRoute
   '/api/draw/$oripaId': typeof ApiDrawOripaIdRoute
   '/api/draws/recent': typeof ApiDrawsRecentRoute
   '/api/metadata/$cardId': typeof ApiMetadataCardIdRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/api/stats': typeof ApiStatsRoute
   '/oripa/$id': typeof OripaIdRoute
   '/api/admin/seed': typeof ApiAdminSeedRoute
+  '/api/card-image/$cardId': typeof ApiCardImageCardIdRoute
   '/api/draw/$oripaId': typeof ApiDrawOripaIdRoute
   '/api/draws/recent': typeof ApiDrawsRecentRoute
   '/api/metadata/$cardId': typeof ApiMetadataCardIdRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/api/stats': typeof ApiStatsRoute
   '/oripa/$id': typeof OripaIdRoute
   '/api/admin/seed': typeof ApiAdminSeedRoute
+  '/api/card-image/$cardId': typeof ApiCardImageCardIdRoute
   '/api/draw/$oripaId': typeof ApiDrawOripaIdRoute
   '/api/draws/recent': typeof ApiDrawsRecentRoute
   '/api/metadata/$cardId': typeof ApiMetadataCardIdRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/api/stats'
     | '/oripa/$id'
     | '/api/admin/seed'
+    | '/api/card-image/$cardId'
     | '/api/draw/$oripaId'
     | '/api/draws/recent'
     | '/api/metadata/$cardId'
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/api/stats'
     | '/oripa/$id'
     | '/api/admin/seed'
+    | '/api/card-image/$cardId'
     | '/api/draw/$oripaId'
     | '/api/draws/recent'
     | '/api/metadata/$cardId'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/api/stats'
     | '/oripa/$id'
     | '/api/admin/seed'
+    | '/api/card-image/$cardId'
     | '/api/draw/$oripaId'
     | '/api/draws/recent'
     | '/api/metadata/$cardId'
@@ -204,6 +216,7 @@ export interface RootRouteChildren {
   ApiStatsRoute: typeof ApiStatsRoute
   OripaIdRoute: typeof OripaIdRoute
   ApiAdminSeedRoute: typeof ApiAdminSeedRoute
+  ApiCardImageCardIdRoute: typeof ApiCardImageCardIdRoute
   ApiDrawOripaIdRoute: typeof ApiDrawOripaIdRoute
   ApiDrawsRecentRoute: typeof ApiDrawsRecentRoute
   ApiMetadataCardIdRoute: typeof ApiMetadataCardIdRoute
@@ -290,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDrawOripaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/card-image/$cardId': {
+      id: '/api/card-image/$cardId'
+      path: '/api/card-image/$cardId'
+      fullPath: '/api/card-image/$cardId'
+      preLoaderRoute: typeof ApiCardImageCardIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/seed': {
       id: '/api/admin/seed'
       path: '/api/admin/seed'
@@ -335,6 +355,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiStatsRoute: ApiStatsRoute,
   OripaIdRoute: OripaIdRoute,
   ApiAdminSeedRoute: ApiAdminSeedRoute,
+  ApiCardImageCardIdRoute: ApiCardImageCardIdRoute,
   ApiDrawOripaIdRoute: ApiDrawOripaIdRoute,
   ApiDrawsRecentRoute: ApiDrawsRecentRoute,
   ApiMetadataCardIdRoute: ApiMetadataCardIdRoute,
