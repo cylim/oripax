@@ -278,7 +278,7 @@ export function PachinkoBoard({ onBallLand, targetSlot, isDropping }: PachinkoBo
   }, [isDropping, targetSlot])
 
   return (
-    <div className="relative w-full aspect-[3/4] max-w-md mx-auto">
+    <div className="relative w-full aspect-[3/4] max-w-[280px] sm:max-w-md mx-auto">
       <canvas
         ref={canvasRef}
         className="w-full h-full rounded-lg border border-pachinko-gold/20"

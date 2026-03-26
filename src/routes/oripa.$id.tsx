@@ -111,6 +111,20 @@ function OripaDrawPage() {
           />
         </div>
 
+        {/* Draw Button — mobile: between board and sidebar */}
+        <div className="flex flex-col items-center gap-3 lg:hidden">
+          <DrawButton
+            price={oripa.pricePerDraw}
+            disabled={drawState !== 'idle'}
+            loading={drawState === 'paying'}
+            soldOut={oripa.status === 'sold_out'}
+            onClick={handleDraw}
+          />
+          {error && (
+            <p className="text-red-400 text-sm">{error}</p>
+          )}
+        </div>
+
         {/* Pool Info Sidebar */}
         <div className="w-full lg:w-64 space-y-6">
           {pool && (
@@ -138,8 +152,8 @@ function OripaDrawPage() {
         </div>
       </div>
 
-      {/* Draw Button */}
-      <div className="flex flex-col items-center mt-8 gap-3">
+      {/* Draw Button — desktop: below everything */}
+      <div className="hidden lg:flex flex-col items-center mt-8 gap-3">
         <DrawButton
           price={oripa.pricePerDraw}
           disabled={drawState !== 'idle'}
