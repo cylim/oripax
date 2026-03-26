@@ -146,6 +146,8 @@ wrangler secret put OKX_API_KEY           # From step 7
 wrangler secret put OKX_SECRET_KEY        # From step 7
 wrangler secret put OKX_PASSPHRASE        # From step 7
 wrangler secret put ADMIN_SECRET          # Any strong random string (used to auth /api/admin/seed)
+wrangler secret put JWT_SECRET            # Random 64+ char hex string (used for admin JWT signing)
+wrangler secret put ADMIN_WALLETS         # Comma-separated admin wallet addresses (e.g. "0xabc,0xdef")
 ```
 
 ### 13. Deploy to Cloudflare Workers
@@ -230,6 +232,8 @@ export const POOL_PRICES = {
 
 Pool sizes and card distributions are in `src/server/seed.ts`. After changing either, re-seed.
 
+Alternatively, use the **Admin Portal** at `/admin` to create new pools with custom configurations without re-seeding.
+
 ---
 
 ## Environment Variables Reference
@@ -251,6 +255,8 @@ Pool sizes and card distributions are in `src/server/seed.ts`. After changing ei
 | `OKX_SECRET_KEY`     | OKX Developer Portal secret key    |
 | `OKX_PASSPHRASE`     | OKX Developer Portal passphrase    |
 | `ADMIN_SECRET`       | Auth token for `/api/admin/seed`   |
+| `JWT_SECRET`         | Random hex string for admin JWT signing |
+| `ADMIN_WALLETS`      | Comma-separated admin wallet addresses |
 
 ### `src/lib/constants.ts` (committed)
 
@@ -259,6 +265,60 @@ Pool sizes and card distributions are in `src/server/seed.ts`. After changing ei
 | `CONTRACT_ADDRESS`      | Must match wrangler.jsonc                        |
 | `USDT_CONTRACT_ADDRESS` | USDT token on X Layer — verify before production |
 | `POOL_PRICES`           | Draw prices in USDT per pool tier                |
+
+---
+
+## Admin Portal
+
+The admin portal at `/admin` provides a web UI for pool management. Only whitelisted wallet addresses can access it.
+
+### Setup
+
+1. Set the `ADMIN_WALLETS` secret to a comma-separated list of admin wallet addresses:
+
+```bash
+wrangler secret put ADMIN_WALLETS
+# Enter: 0xYourAddress,0xAnotherAdmin
+```
+
+2. Set the `JWT_SECRET` used for signing admin session tokens:
+
+```bash
+wrangler secret put JWT_SECRET
+# Enter a random 64+ character hex string
+```
+
+For local dev, set these in `wrangler.jsonc` under `vars`:
+
+```jsonc
+"ADMIN_WALLETS": "0xYourLocalDevAddress",
+"JWT_SECRET": "dev-jwt-secret-change-me"
+```
+
+### Usage
+
+1. Navigate to `/admin`
+2. Connect your OKX wallet
+3. Click "Sign to Authenticate" — your wallet will prompt you to sign a challenge message
+4. After signing, you'll see the admin dashboard
+
+### Features
+
+- **Dashboard** — View all pools (active and sold-out) with stats: remaining slots, revenue, pending draws
+- **Create Pool** — Create new pools with custom name, price, slot count, rarity distribution, and Last One prize
+- **Refill Pool** — Add new slots to an existing pool (reactivates sold-out pools)
+- **Reset Pool** — Clear all pulls from a pool and re-shuffle card assignments. Blocks if there are pending draws unless force mode is used
+
+### Auth Flow
+
+```
+Admin connects wallet → POST /api/admin/auth/challenge (get nonce)
+    → Wallet signs challenge via personal_sign
+    → POST /api/admin/auth/login (submit signature)
+    → Server recovers address via EIP-191, checks ADMIN_WALLETS
+    → Issues HS256 JWT (24h expiry) as HttpOnly cookie
+    → All admin endpoints validate JWT on each request
+```
 
 ---
 

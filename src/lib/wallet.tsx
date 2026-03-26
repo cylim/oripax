@@ -49,6 +49,7 @@ interface WalletContextValue {
   connect: () => Promise<void>
   disconnect: () => Promise<void>
   signPayment: (requirements: PaymentRequirements) => Promise<string>
+  signMessage: (message: string) => Promise<string>
 }
 
 const WalletContext = createContext<WalletContextValue | null>(null)
@@ -130,6 +131,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setAddress(null)
   }, [])
 
+  const signMessage = useCallback(
+    async (message: string): Promise<string> => {
+      const ui = await getUI()
+      if (!address) throw new Error('Wallet not connected')
+      // Hex-encode message for personal_sign
+      const hex =
+        '0x' +
+        Array.from(new TextEncoder().encode(message))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('')
+      return ui.request<string>(
+        { method: 'personal_sign', params: [hex, address] },
+        'eip155:196'
+      )
+    },
+    [address]
+  )
+
   const signPayment = useCallback(
     async (requirements: PaymentRequirements): Promise<string> => {
       const ui = await getUI()
@@ -185,6 +204,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         connect,
         disconnect,
         signPayment,
+        signMessage,
       }}
     >
       {children}

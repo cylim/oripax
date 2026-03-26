@@ -50,17 +50,32 @@ curl https://oripax.example.com/api/stats
 
 ## API Reference
 
-| Method | Endpoint              | Auth | Description                   |
-| ------ | --------------------- | ---- | ----------------------------- |
-| GET    | /api/health           | None | Health check                  |
-| GET    | /api/oripas           | None | List active oripas            |
-| GET    | /api/oripa/:id        | None | Single oripa detail with pool |
-| GET    | /api/oripa/:id/pool   | None | Pool status with live odds    |
-| GET    | /api/draw/:oripaId    | x402 | Draw a card (pay USDT)        |
-| GET    | /api/draws/recent     | None | Recent draws                  |
-| GET    | /api/draws/user/:addr | None | User's draw history           |
-| GET    | /api/stats            | None | Global statistics             |
-| GET    | /api/metadata/:cardId | None | ERC-721 metadata JSON         |
+| Method | Endpoint                    | Auth | Description                    |
+| ------ | --------------------------- | ---- | ------------------------------ |
+| GET    | /api/health                 | None | Health check                   |
+| GET    | /api/oripas                 | None | List active oripas             |
+| GET    | /api/oripa/:id              | None | Single oripa detail with pool  |
+| GET    | /api/oripa/:id/pool         | None | Pool status with live odds     |
+| GET    | /api/draw/:oripaId          | x402 | Draw a card (pay USDT)         |
+| POST   | /api/draws/decide/:drawId   | None | Keep or buyback a drawn card   |
+| GET    | /api/draws/status/:drawId   | None | Check pending draw status      |
+| GET    | /api/draws/recent           | None | Recent draws                   |
+| GET    | /api/draws/user/:addr       | None | User's draw history            |
+| GET    | /api/stats                  | None | Global statistics              |
+| GET    | /api/metadata/:cardId       | None | ERC-721 metadata JSON          |
+
+### Admin Endpoints
+
+| Method | Endpoint                    | Auth      | Description                 |
+| ------ | --------------------------- | --------- | --------------------------- |
+| POST   | /api/admin/auth/challenge   | None      | Get sign-in challenge nonce |
+| POST   | /api/admin/auth/login       | None      | Submit signature, get JWT   |
+| POST   | /api/admin/auth/logout      | JWT       | Clear admin session         |
+| GET    | /api/admin/oripas           | JWT       | All pools with admin stats  |
+| GET    | /api/admin/cards            | JWT       | Card catalog for selectors  |
+| POST   | /api/admin/oripa/create     | JWT       | Create a new pool           |
+| POST   | /api/admin/oripa/:id/refill | JWT       | Add slots to existing pool  |
+| POST   | /api/admin/oripa/:id/reset  | JWT       | Reset pool (clear pulls)    |
 
 ## x402 Payment Flow
 
@@ -70,12 +85,48 @@ curl https://oripax.example.com/api/stats
 4. Retry the draw endpoint with the signed payment in the `X-PAYMENT` header (base64-encoded)
 5. Server verifies payment via OKX x402 facilitator → executes draw → mints NFT → returns card
 
+## Keep / Buyback Mechanics
+
+After drawing a card, users have a **5-minute decision window**:
+
+- **Keep** (`POST /api/draws/decide/:drawId` with `{"action":"keep","userAddress":"0x..."}`) — mints the card as an ERC-721 NFT
+- **Buyback** (`POST /api/draws/decide/:drawId` with `{"action":"buyback","userAddress":"0x..."}`) — sells the card back for a partial USDT refund; the slot returns to the pool
+
+Buyback rates by rarity: Common 20%, Uncommon 30%, Rare 50%, Ultra Rare 80%, Secret Rare 90%.
+
+If no decision is made within 5 minutes, the card is **auto-kept** (minted as NFT). Last One wins are auto-kept immediately with no buyback option.
+
+Check status anytime: `GET /api/draws/status/:drawId?address=0x...`
+
 ## Oripa Mechanics
 
 - **Finite pool**: Each oripa has a fixed number of slots (e.g., 100). When all slots are drawn, the oripa is SOLD OUT.
 - **Shifting odds**: As cards are drawn, the remaining pool composition changes. If all Commons are drawn first, later draws have higher rare odds.
 - **Last One (ラストワン)**: Whoever draws the final slot wins a bonus grand prize NFT in addition to their regular card.
+- **Buyback recycling**: When a user buys back a card, the slot returns to the pool. If the pool was sold out, it reactivates.
 - **Transparency**: Pool composition and remaining cards are always queryable via the API.
+
+## Admin Portal
+
+The admin portal at `/admin` lets whitelisted wallet addresses manage pools via a web UI.
+
+### Admin Auth Flow
+
+```
+1. POST /api/admin/auth/challenge  { address: "0x..." }
+   → { message, nonce, expiresAt }
+
+2. Wallet signs the message via personal_sign
+
+3. POST /api/admin/auth/login  { address, nonce, signature }
+   → { success, token }  (JWT set as HttpOnly cookie, 24h expiry)
+```
+
+### Pool Management
+
+- **Create** — `POST /api/admin/oripa/create` with name, price, totalSlots, lastOnePrize, slotDistribution
+- **Refill** — `POST /api/admin/oripa/:id/refill` with slotDistribution to add new slots
+- **Reset** — `POST /api/admin/oripa/:id/reset` clears all pulls, re-shuffles cards. Use `{ force: true }` to auto-keep pending draws
 
 ## Chain Details
 

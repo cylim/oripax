@@ -11,21 +11,33 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as CollectionRouteImport } from './routes/collection'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as OripaIdRouteImport } from './routes/oripa.$id'
 import { Route as ApiStatsRouteImport } from './routes/api/stats'
 import { Route as ApiOripasRouteImport } from './routes/api/oripas'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as AdminCreateRouteImport } from './routes/admin.create'
 import { Route as ApiOripaIdRouteImport } from './routes/api/oripa.$id'
 import { Route as ApiMetadataCardIdRouteImport } from './routes/api/metadata.$cardId'
 import { Route as ApiDrawsRecentRouteImport } from './routes/api/draws.recent'
 import { Route as ApiDrawOripaIdRouteImport } from './routes/api/draw.$oripaId'
 import { Route as ApiCardImageCardIdRouteImport } from './routes/api/card-image.$cardId'
 import { Route as ApiAdminSeedRouteImport } from './routes/api/admin.seed'
+import { Route as ApiAdminOripasRouteImport } from './routes/api/admin.oripas'
+import { Route as ApiAdminCardsRouteImport } from './routes/api/admin.cards'
+import { Route as AdminPoolIdRouteImport } from './routes/admin.pool.$id'
 import { Route as ApiOripaIdPoolRouteImport } from './routes/api/oripa.$id.pool'
 import { Route as ApiDrawsUserAddressRouteImport } from './routes/api/draws.user.$address'
 import { Route as ApiDrawsStatusDrawIdRouteImport } from './routes/api/draws.status.$drawId'
 import { Route as ApiDrawsDecideDrawIdRouteImport } from './routes/api/draws.decide.$drawId'
+import { Route as ApiAdminOripaCreateRouteImport } from './routes/api/admin.oripa.create'
+import { Route as ApiAdminAuthLogoutRouteImport } from './routes/api/admin.auth.logout'
+import { Route as ApiAdminAuthLoginRouteImport } from './routes/api/admin.auth.login'
+import { Route as ApiAdminAuthChallengeRouteImport } from './routes/api/admin.auth.challenge'
+import { Route as ApiAdminOripaIdResetRouteImport } from './routes/api/admin.oripa.$id.reset'
+import { Route as ApiAdminOripaIdRefillRouteImport } from './routes/api/admin.oripa.$id.refill'
 
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
@@ -37,10 +49,20 @@ const CollectionRoute = CollectionRouteImport.update({
   path: '/collection',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const OripaIdRoute = OripaIdRouteImport.update({
   id: '/oripa/$id',
@@ -61,6 +83,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminCreateRoute = AdminCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminRoute,
 } as any)
 const ApiOripaIdRoute = ApiOripaIdRouteImport.update({
   id: '/api/oripa/$id',
@@ -92,6 +119,21 @@ const ApiAdminSeedRoute = ApiAdminSeedRouteImport.update({
   path: '/api/admin/seed',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminOripasRoute = ApiAdminOripasRouteImport.update({
+  id: '/api/admin/oripas',
+  path: '/api/admin/oripas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminCardsRoute = ApiAdminCardsRouteImport.update({
+  id: '/api/admin/cards',
+  path: '/api/admin/cards',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPoolIdRoute = AdminPoolIdRouteImport.update({
+  id: '/pool/$id',
+  path: '/pool/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ApiOripaIdPoolRoute = ApiOripaIdPoolRouteImport.update({
   id: '/pool',
   path: '/pool',
@@ -112,142 +154,251 @@ const ApiDrawsDecideDrawIdRoute = ApiDrawsDecideDrawIdRouteImport.update({
   path: '/api/draws/decide/$drawId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminOripaCreateRoute = ApiAdminOripaCreateRouteImport.update({
+  id: '/api/admin/oripa/create',
+  path: '/api/admin/oripa/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminAuthLogoutRoute = ApiAdminAuthLogoutRouteImport.update({
+  id: '/api/admin/auth/logout',
+  path: '/api/admin/auth/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminAuthLoginRoute = ApiAdminAuthLoginRouteImport.update({
+  id: '/api/admin/auth/login',
+  path: '/api/admin/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminAuthChallengeRoute = ApiAdminAuthChallengeRouteImport.update({
+  id: '/api/admin/auth/challenge',
+  path: '/api/admin/auth/challenge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminOripaIdResetRoute = ApiAdminOripaIdResetRouteImport.update({
+  id: '/api/admin/oripa/$id/reset',
+  path: '/api/admin/oripa/$id/reset',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminOripaIdRefillRoute = ApiAdminOripaIdRefillRouteImport.update({
+  id: '/api/admin/oripa/$id/refill',
+  path: '/api/admin/oripa/$id/refill',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/collection': typeof CollectionRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/admin/create': typeof AdminCreateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/oripas': typeof ApiOripasRoute
   '/api/stats': typeof ApiStatsRoute
   '/oripa/$id': typeof OripaIdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/pool/$id': typeof AdminPoolIdRoute
+  '/api/admin/cards': typeof ApiAdminCardsRoute
+  '/api/admin/oripas': typeof ApiAdminOripasRoute
   '/api/admin/seed': typeof ApiAdminSeedRoute
   '/api/card-image/$cardId': typeof ApiCardImageCardIdRoute
   '/api/draw/$oripaId': typeof ApiDrawOripaIdRoute
   '/api/draws/recent': typeof ApiDrawsRecentRoute
   '/api/metadata/$cardId': typeof ApiMetadataCardIdRoute
   '/api/oripa/$id': typeof ApiOripaIdRouteWithChildren
+  '/api/admin/auth/challenge': typeof ApiAdminAuthChallengeRoute
+  '/api/admin/auth/login': typeof ApiAdminAuthLoginRoute
+  '/api/admin/auth/logout': typeof ApiAdminAuthLogoutRoute
+  '/api/admin/oripa/create': typeof ApiAdminOripaCreateRoute
   '/api/draws/decide/$drawId': typeof ApiDrawsDecideDrawIdRoute
   '/api/draws/status/$drawId': typeof ApiDrawsStatusDrawIdRoute
   '/api/draws/user/$address': typeof ApiDrawsUserAddressRoute
   '/api/oripa/$id/pool': typeof ApiOripaIdPoolRoute
+  '/api/admin/oripa/$id/refill': typeof ApiAdminOripaIdRefillRoute
+  '/api/admin/oripa/$id/reset': typeof ApiAdminOripaIdResetRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/collection': typeof CollectionRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/admin/create': typeof AdminCreateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/oripas': typeof ApiOripasRoute
   '/api/stats': typeof ApiStatsRoute
   '/oripa/$id': typeof OripaIdRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/pool/$id': typeof AdminPoolIdRoute
+  '/api/admin/cards': typeof ApiAdminCardsRoute
+  '/api/admin/oripas': typeof ApiAdminOripasRoute
   '/api/admin/seed': typeof ApiAdminSeedRoute
   '/api/card-image/$cardId': typeof ApiCardImageCardIdRoute
   '/api/draw/$oripaId': typeof ApiDrawOripaIdRoute
   '/api/draws/recent': typeof ApiDrawsRecentRoute
   '/api/metadata/$cardId': typeof ApiMetadataCardIdRoute
   '/api/oripa/$id': typeof ApiOripaIdRouteWithChildren
+  '/api/admin/auth/challenge': typeof ApiAdminAuthChallengeRoute
+  '/api/admin/auth/login': typeof ApiAdminAuthLoginRoute
+  '/api/admin/auth/logout': typeof ApiAdminAuthLogoutRoute
+  '/api/admin/oripa/create': typeof ApiAdminOripaCreateRoute
   '/api/draws/decide/$drawId': typeof ApiDrawsDecideDrawIdRoute
   '/api/draws/status/$drawId': typeof ApiDrawsStatusDrawIdRoute
   '/api/draws/user/$address': typeof ApiDrawsUserAddressRoute
   '/api/oripa/$id/pool': typeof ApiOripaIdPoolRoute
+  '/api/admin/oripa/$id/refill': typeof ApiAdminOripaIdRefillRoute
+  '/api/admin/oripa/$id/reset': typeof ApiAdminOripaIdResetRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/collection': typeof CollectionRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/admin/create': typeof AdminCreateRoute
   '/api/health': typeof ApiHealthRoute
   '/api/oripas': typeof ApiOripasRoute
   '/api/stats': typeof ApiStatsRoute
   '/oripa/$id': typeof OripaIdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/pool/$id': typeof AdminPoolIdRoute
+  '/api/admin/cards': typeof ApiAdminCardsRoute
+  '/api/admin/oripas': typeof ApiAdminOripasRoute
   '/api/admin/seed': typeof ApiAdminSeedRoute
   '/api/card-image/$cardId': typeof ApiCardImageCardIdRoute
   '/api/draw/$oripaId': typeof ApiDrawOripaIdRoute
   '/api/draws/recent': typeof ApiDrawsRecentRoute
   '/api/metadata/$cardId': typeof ApiMetadataCardIdRoute
   '/api/oripa/$id': typeof ApiOripaIdRouteWithChildren
+  '/api/admin/auth/challenge': typeof ApiAdminAuthChallengeRoute
+  '/api/admin/auth/login': typeof ApiAdminAuthLoginRoute
+  '/api/admin/auth/logout': typeof ApiAdminAuthLogoutRoute
+  '/api/admin/oripa/create': typeof ApiAdminOripaCreateRoute
   '/api/draws/decide/$drawId': typeof ApiDrawsDecideDrawIdRoute
   '/api/draws/status/$drawId': typeof ApiDrawsStatusDrawIdRoute
   '/api/draws/user/$address': typeof ApiDrawsUserAddressRoute
   '/api/oripa/$id/pool': typeof ApiOripaIdPoolRoute
+  '/api/admin/oripa/$id/refill': typeof ApiAdminOripaIdRefillRoute
+  '/api/admin/oripa/$id/reset': typeof ApiAdminOripaIdResetRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/collection'
     | '/leaderboard'
+    | '/admin/create'
     | '/api/health'
     | '/api/oripas'
     | '/api/stats'
     | '/oripa/$id'
+    | '/admin/'
+    | '/admin/pool/$id'
+    | '/api/admin/cards'
+    | '/api/admin/oripas'
     | '/api/admin/seed'
     | '/api/card-image/$cardId'
     | '/api/draw/$oripaId'
     | '/api/draws/recent'
     | '/api/metadata/$cardId'
     | '/api/oripa/$id'
+    | '/api/admin/auth/challenge'
+    | '/api/admin/auth/login'
+    | '/api/admin/auth/logout'
+    | '/api/admin/oripa/create'
     | '/api/draws/decide/$drawId'
     | '/api/draws/status/$drawId'
     | '/api/draws/user/$address'
     | '/api/oripa/$id/pool'
+    | '/api/admin/oripa/$id/refill'
+    | '/api/admin/oripa/$id/reset'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/collection'
     | '/leaderboard'
+    | '/admin/create'
     | '/api/health'
     | '/api/oripas'
     | '/api/stats'
     | '/oripa/$id'
+    | '/admin'
+    | '/admin/pool/$id'
+    | '/api/admin/cards'
+    | '/api/admin/oripas'
     | '/api/admin/seed'
     | '/api/card-image/$cardId'
     | '/api/draw/$oripaId'
     | '/api/draws/recent'
     | '/api/metadata/$cardId'
     | '/api/oripa/$id'
+    | '/api/admin/auth/challenge'
+    | '/api/admin/auth/login'
+    | '/api/admin/auth/logout'
+    | '/api/admin/oripa/create'
     | '/api/draws/decide/$drawId'
     | '/api/draws/status/$drawId'
     | '/api/draws/user/$address'
     | '/api/oripa/$id/pool'
+    | '/api/admin/oripa/$id/refill'
+    | '/api/admin/oripa/$id/reset'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/collection'
     | '/leaderboard'
+    | '/admin/create'
     | '/api/health'
     | '/api/oripas'
     | '/api/stats'
     | '/oripa/$id'
+    | '/admin/'
+    | '/admin/pool/$id'
+    | '/api/admin/cards'
+    | '/api/admin/oripas'
     | '/api/admin/seed'
     | '/api/card-image/$cardId'
     | '/api/draw/$oripaId'
     | '/api/draws/recent'
     | '/api/metadata/$cardId'
     | '/api/oripa/$id'
+    | '/api/admin/auth/challenge'
+    | '/api/admin/auth/login'
+    | '/api/admin/auth/logout'
+    | '/api/admin/oripa/create'
     | '/api/draws/decide/$drawId'
     | '/api/draws/status/$drawId'
     | '/api/draws/user/$address'
     | '/api/oripa/$id/pool'
+    | '/api/admin/oripa/$id/refill'
+    | '/api/admin/oripa/$id/reset'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   CollectionRoute: typeof CollectionRoute
   LeaderboardRoute: typeof LeaderboardRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiOripasRoute: typeof ApiOripasRoute
   ApiStatsRoute: typeof ApiStatsRoute
   OripaIdRoute: typeof OripaIdRoute
+  ApiAdminCardsRoute: typeof ApiAdminCardsRoute
+  ApiAdminOripasRoute: typeof ApiAdminOripasRoute
   ApiAdminSeedRoute: typeof ApiAdminSeedRoute
   ApiCardImageCardIdRoute: typeof ApiCardImageCardIdRoute
   ApiDrawOripaIdRoute: typeof ApiDrawOripaIdRoute
   ApiDrawsRecentRoute: typeof ApiDrawsRecentRoute
   ApiMetadataCardIdRoute: typeof ApiMetadataCardIdRoute
   ApiOripaIdRoute: typeof ApiOripaIdRouteWithChildren
+  ApiAdminAuthChallengeRoute: typeof ApiAdminAuthChallengeRoute
+  ApiAdminAuthLoginRoute: typeof ApiAdminAuthLoginRoute
+  ApiAdminAuthLogoutRoute: typeof ApiAdminAuthLogoutRoute
+  ApiAdminOripaCreateRoute: typeof ApiAdminOripaCreateRoute
   ApiDrawsDecideDrawIdRoute: typeof ApiDrawsDecideDrawIdRoute
   ApiDrawsStatusDrawIdRoute: typeof ApiDrawsStatusDrawIdRoute
   ApiDrawsUserAddressRoute: typeof ApiDrawsUserAddressRoute
+  ApiAdminOripaIdRefillRoute: typeof ApiAdminOripaIdRefillRoute
+  ApiAdminOripaIdResetRoute: typeof ApiAdminOripaIdResetRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -266,12 +417,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/oripa/$id': {
       id: '/oripa/$id'
@@ -300,6 +465,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/health'
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/create': {
+      id: '/admin/create'
+      path: '/create'
+      fullPath: '/admin/create'
+      preLoaderRoute: typeof AdminCreateRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/api/oripa/$id': {
       id: '/api/oripa/$id'
@@ -343,6 +515,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminSeedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/oripas': {
+      id: '/api/admin/oripas'
+      path: '/api/admin/oripas'
+      fullPath: '/api/admin/oripas'
+      preLoaderRoute: typeof ApiAdminOripasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/cards': {
+      id: '/api/admin/cards'
+      path: '/api/admin/cards'
+      fullPath: '/api/admin/cards'
+      preLoaderRoute: typeof ApiAdminCardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/pool/$id': {
+      id: '/admin/pool/$id'
+      path: '/pool/$id'
+      fullPath: '/admin/pool/$id'
+      preLoaderRoute: typeof AdminPoolIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/api/oripa/$id/pool': {
       id: '/api/oripa/$id/pool'
       path: '/pool'
@@ -371,8 +564,64 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDrawsDecideDrawIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/oripa/create': {
+      id: '/api/admin/oripa/create'
+      path: '/api/admin/oripa/create'
+      fullPath: '/api/admin/oripa/create'
+      preLoaderRoute: typeof ApiAdminOripaCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/auth/logout': {
+      id: '/api/admin/auth/logout'
+      path: '/api/admin/auth/logout'
+      fullPath: '/api/admin/auth/logout'
+      preLoaderRoute: typeof ApiAdminAuthLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/auth/login': {
+      id: '/api/admin/auth/login'
+      path: '/api/admin/auth/login'
+      fullPath: '/api/admin/auth/login'
+      preLoaderRoute: typeof ApiAdminAuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/auth/challenge': {
+      id: '/api/admin/auth/challenge'
+      path: '/api/admin/auth/challenge'
+      fullPath: '/api/admin/auth/challenge'
+      preLoaderRoute: typeof ApiAdminAuthChallengeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/oripa/$id/reset': {
+      id: '/api/admin/oripa/$id/reset'
+      path: '/api/admin/oripa/$id/reset'
+      fullPath: '/api/admin/oripa/$id/reset'
+      preLoaderRoute: typeof ApiAdminOripaIdResetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/oripa/$id/refill': {
+      id: '/api/admin/oripa/$id/refill'
+      path: '/api/admin/oripa/$id/refill'
+      fullPath: '/api/admin/oripa/$id/refill'
+      preLoaderRoute: typeof ApiAdminOripaIdRefillRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminCreateRoute: typeof AdminCreateRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminPoolIdRoute: typeof AdminPoolIdRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCreateRoute: AdminCreateRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminPoolIdRoute: AdminPoolIdRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface ApiOripaIdRouteChildren {
   ApiOripaIdPoolRoute: typeof ApiOripaIdPoolRoute
@@ -388,21 +637,30 @@ const ApiOripaIdRouteWithChildren = ApiOripaIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   CollectionRoute: CollectionRoute,
   LeaderboardRoute: LeaderboardRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiOripasRoute: ApiOripasRoute,
   ApiStatsRoute: ApiStatsRoute,
   OripaIdRoute: OripaIdRoute,
+  ApiAdminCardsRoute: ApiAdminCardsRoute,
+  ApiAdminOripasRoute: ApiAdminOripasRoute,
   ApiAdminSeedRoute: ApiAdminSeedRoute,
   ApiCardImageCardIdRoute: ApiCardImageCardIdRoute,
   ApiDrawOripaIdRoute: ApiDrawOripaIdRoute,
   ApiDrawsRecentRoute: ApiDrawsRecentRoute,
   ApiMetadataCardIdRoute: ApiMetadataCardIdRoute,
   ApiOripaIdRoute: ApiOripaIdRouteWithChildren,
+  ApiAdminAuthChallengeRoute: ApiAdminAuthChallengeRoute,
+  ApiAdminAuthLoginRoute: ApiAdminAuthLoginRoute,
+  ApiAdminAuthLogoutRoute: ApiAdminAuthLogoutRoute,
+  ApiAdminOripaCreateRoute: ApiAdminOripaCreateRoute,
   ApiDrawsDecideDrawIdRoute: ApiDrawsDecideDrawIdRoute,
   ApiDrawsStatusDrawIdRoute: ApiDrawsStatusDrawIdRoute,
   ApiDrawsUserAddressRoute: ApiDrawsUserAddressRoute,
+  ApiAdminOripaIdRefillRoute: ApiAdminOripaIdRefillRoute,
+  ApiAdminOripaIdResetRoute: ApiAdminOripaIdResetRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

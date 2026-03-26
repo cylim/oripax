@@ -9,7 +9,9 @@
 		"XLAYER_RPC": "https://rpc.xlayer.tech",
 		"CONTRACT_ADDRESS": "0x0000000000000000000000000000000000000000",
 		"PAYMENT_WALLET": "0x0000000000000000000000000000000000000000",
-		"ADMIN_SECRET": "dev-secret"
+		"ADMIN_SECRET": "dev-secret",
+		"ADMIN_WALLETS": "",
+		"JWT_SECRET": "dev-jwt-secret-change-me"
 	},
 	"d1_databases": [
 		{

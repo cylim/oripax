@@ -8,7 +8,9 @@ OripaX is a Japanese-style Oripa (オリパ / Original Pack) gacha system deploy
 - **x402 micropayments** — Gas-free USDT payments on X Layer via the x402 HTTP protocol
 - **Finite pools with shifting odds** — As cards are drawn, remaining odds change in real-time
 - **Last One (ラストワン) mechanic** — The final draw from any pool wins a grand prize NFT
+- **Keep / Buyback system** — 5-minute window to sell cards back for partial USDT refunds (20–90% by rarity)
 - **API-first** — Every feature is an HTTP endpoint. AI agents and bots can draw cards programmatically
+- **Admin portal** — Wallet-authenticated admin panel at `/admin` for pool creation, refill, and reset
 - **OKX Wallet Connect** — Connect via OKX Universal Connect SDK with dark theme
 
 ## Tech Stack
@@ -66,6 +68,8 @@ wrangler secret put OKX_API_KEY
 wrangler secret put OKX_SECRET_KEY
 wrangler secret put OKX_PASSPHRASE
 wrangler secret put ADMIN_SECRET
+wrangler secret put JWT_SECRET
+wrangler secret put ADMIN_WALLETS       # Comma-separated admin addresses
 
 # Deploy contract to X Layer
 bun run contracts:deploy
@@ -88,10 +92,25 @@ All endpoints return JSON. Draw endpoints require x402 payment.
 | GET | /api/oripa/:id | Oripa detail with pool status |
 | GET | /api/oripa/:id/pool | Live pool odds |
 | GET | /api/draw/:oripaId | Draw a card (x402-gated) |
+| POST | /api/draws/decide/:drawId | Keep or buyback a drawn card |
+| GET | /api/draws/status/:drawId | Check pending draw status |
 | GET | /api/draws/recent | Recent draws |
 | GET | /api/draws/user/:addr | User's draw history |
 | GET | /api/stats | Global statistics |
 | GET | /api/metadata/:cardId | ERC-721 metadata |
+
+### Admin Endpoints (JWT-protected, wallet-authenticated)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /api/admin/auth/challenge | Get sign-in challenge nonce |
+| POST | /api/admin/auth/login | Submit signature, receive JWT |
+| POST | /api/admin/auth/logout | Clear admin session |
+| GET | /api/admin/oripas | List all pools with stats |
+| GET | /api/admin/cards | Card catalog for pool creation |
+| POST | /api/admin/oripa/create | Create a new pool |
+| POST | /api/admin/oripa/:id/refill | Add slots to existing pool |
+| POST | /api/admin/oripa/:id/reset | Reset a pool (clear all pulls) |
 
 See [SKILL.md](./SKILL.md) for the full integration guide.
 
@@ -100,7 +119,12 @@ See [SKILL.md](./SKILL.md) for the full integration guide.
 ```
 User clicks Draw → x402 payment flow → OKX wallet signs USDT transfer
     → Server verifies payment → Core engine draws from pool
-    → ERC-721 minted on X Layer → Pachinko ball drops → Card revealed
+    → Card revealed → User has 5 min to Keep or Buyback
+    → Keep: ERC-721 minted on X Layer
+    → Buyback: USDT refund sent, slot returns to pool
+
+Admin connects wallet → Signs challenge → JWT issued
+    → /admin portal: Create pools, refill slots, reset sold-out pools
 ```
 
 ## License

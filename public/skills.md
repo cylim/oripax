@@ -262,6 +262,70 @@ OripaX is designed for autonomous agent interaction. A recommended agent workflo
 | 500         | Server error — draw may have succeeded, check tx hash    |
 | 503         | Buyback temporarily unavailable (wallet out of USDT)     |
 
+## Admin Portal
+
+The admin portal at `/admin` lets whitelisted wallet addresses manage pools. Authentication uses EIP-191 wallet signatures + JWT tokens.
+
+### Admin API Endpoints
+
+| Method | Endpoint                    | Auth | Description                 |
+| ------ | --------------------------- | ---- | --------------------------- |
+| POST   | /api/admin/auth/challenge   | None | Get sign-in challenge nonce |
+| POST   | /api/admin/auth/login       | None | Submit signature, get JWT   |
+| POST   | /api/admin/auth/logout      | JWT  | Clear admin session         |
+| GET    | /api/admin/oripas           | JWT  | All pools with admin stats  |
+| GET    | /api/admin/cards            | JWT  | Card catalog for selectors  |
+| POST   | /api/admin/oripa/create     | JWT  | Create a new pool           |
+| POST   | /api/admin/oripa/:id/refill | JWT  | Add slots to existing pool  |
+| POST   | /api/admin/oripa/:id/reset  | JWT  | Reset pool (clear pulls)    |
+
+### Create Pool Example
+
+```bash
+curl -X POST https://oripax.example.com/api/admin/oripa/create \
+  -H "Content-Type: application/json" \
+  -H "Cookie: admin_token=<jwt>" \
+  -d '{
+    "name": "Custom Collection",
+    "totalSlots": 50,
+    "pricePerDraw": 0.05,
+    "lastOnePrize": { "cardId": 99, "name": "Grand Prize", "imageUri": "/cards/grand.png" },
+    "slotDistribution": [
+      { "cardId": 1, "rarity": "common", "count": 30 },
+      { "cardId": 2, "rarity": "rare", "count": 15 },
+      { "cardId": 3, "rarity": "ultra_rare", "count": 5 }
+    ]
+  }'
+```
+
+### Refill Pool Example
+
+```bash
+curl -X POST https://oripax.example.com/api/admin/oripa/1/refill \
+  -H "Content-Type: application/json" \
+  -H "Cookie: admin_token=<jwt>" \
+  -d '{
+    "slotDistribution": [
+      { "cardId": 1, "rarity": "common", "count": 20 },
+      { "cardId": 2, "rarity": "rare", "count": 10 }
+    ]
+  }'
+```
+
+### Reset Pool Example
+
+```bash
+# Normal reset (fails if pending draws exist)
+curl -X POST https://oripax.example.com/api/admin/oripa/1/reset \
+  -H "Cookie: admin_token=<jwt>"
+
+# Force reset (auto-keeps pending draws)
+curl -X POST https://oripax.example.com/api/admin/oripa/1/reset \
+  -H "Content-Type: application/json" \
+  -H "Cookie: admin_token=<jwt>" \
+  -d '{"force": true}'
+```
+
 ## Built With
 
 - **OKX Onchain OS**: Wallet API, Market API, x402 Payment API

@@ -8,6 +8,8 @@ export interface Env {
   OKX_SECRET_KEY: string
   OKX_PASSPHRASE: string
   ADMIN_SECRET: string
+  ADMIN_WALLETS: string
+  JWT_SECRET: string
 }
 
 let _env: Env | null = null
@@ -54,6 +56,8 @@ export function getEnv(): Env {
     OKX_SECRET_KEY: '',
     OKX_PASSPHRASE: '',
     ADMIN_SECRET: '',
+    ADMIN_WALLETS: '',
+    JWT_SECRET: 'dev-jwt-secret-change-me',
   }
 }
 
