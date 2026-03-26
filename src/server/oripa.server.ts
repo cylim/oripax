@@ -357,7 +357,8 @@ export async function keepDraw(
   db: Database,
   drawId: number,
   userAddress: string,
-  baseUrl: string
+  baseUrl: string,
+  { skipWindowCheck = false } = {}
 ): Promise<{
   txHash: string | null
   tokenId: number | null
@@ -369,8 +370,10 @@ export async function keepDraw(
   if (draw.userAddress.toLowerCase() !== userAddress.toLowerCase()) throw new Error('NOT_OWNER')
   if (draw.status !== 'pending') throw new Error('ALREADY_DECIDED')
 
-  const elapsed = Date.now() - new Date(draw.createdAt).getTime()
-  if (elapsed > BUYBACK_WINDOW_MS) throw new Error('WINDOW_EXPIRED')
+  if (!skipWindowCheck) {
+    const elapsed = Date.now() - new Date(draw.createdAt).getTime()
+    if (elapsed > BUYBACK_WINDOW_MS) throw new Error('WINDOW_EXPIRED')
+  }
 
   // Optimistic update
   const now = new Date().toISOString()
@@ -398,7 +401,8 @@ export async function keepDraw(
         .where(eq(draws.id, drawId))
     }
     return { ...mintResult, mintPending: false }
-  } catch {
+  } catch (err) {
+    console.error('[keepDraw] Mint failed for draw', drawId, err)
     return { txHash: null, tokenId: null, explorerUrl: null, mintPending: true }
   }
 }
@@ -478,7 +482,7 @@ export async function autoKeepExpiredDraws(db: Database, baseUrl: string) {
 
   for (const draw of expired) {
     try {
-      await keepDraw(db, draw.id, draw.userAddress, baseUrl)
+      await keepDraw(db, draw.id, draw.userAddress, baseUrl, { skipWindowCheck: true })
     } catch (err) {
       // Will retry on next invocation
       console.error(`Auto-keep failed for draw ${draw.id}:`, err)
