@@ -32,6 +32,7 @@ export const Route = createFileRoute('/api/draws/decide/$drawId')({
             return errorResponse('Invalid action, must be "keep" or "buyback"', 400)
           }
           if (!userAddress || !ADDRESS_RE.test(userAddress)) {
+            console.log('[decide] Invalid address received:', JSON.stringify(userAddress))
             return errorResponse('Invalid wallet address', 400)
           }
 

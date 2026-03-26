@@ -1,5 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { createFileRoute, useSearch } from '@tanstack/react-router'
+import { useState, useEffect } from 'react'
 
 interface VerifyResult {
   drawId: number
@@ -18,23 +18,34 @@ interface VerifyResult {
 }
 
 export const Route = createFileRoute('/verify')({
+  validateSearch: (search: Record<string, unknown>) => ({
+    drawId: (search.drawId as string) || '',
+  }),
   component: VerifyPage,
 })
 
 function VerifyPage() {
-  const [drawId, setDrawId] = useState('')
+  const search = Route.useSearch()
+  const [drawId, setDrawId] = useState(search.drawId || '')
   const [result, setResult] = useState<VerifyResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleVerify(e: React.FormEvent) {
-    e.preventDefault()
+  // Auto-verify if drawId is in the URL
+  useEffect(() => {
+    if (search.drawId) {
+      setDrawId(search.drawId)
+      handleVerifyId(search.drawId)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.drawId])
+
+  async function handleVerifyId(id: string) {
     setError(null)
     setResult(null)
     setLoading(true)
-
     try {
-      const res = await fetch(`/api/verify/${drawId}`)
+      const res = await fetch(`/api/verify/${id}`)
       const data = (await res.json()) as VerifyResult | { error: string }
       if ('error' in data) throw new Error(data.error)
       setResult(data as VerifyResult)
@@ -43,6 +54,11 @@ function VerifyPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleVerify(e: React.FormEvent) {
+    e.preventDefault()
+    handleVerifyId(drawId)
   }
 
   return (

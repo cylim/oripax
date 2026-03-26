@@ -2,12 +2,7 @@ import { ethers } from 'ethers'
 import { OripaXABI } from '~/lib/OripaXABI'
 import { XLAYER_EXPLORER } from '~/lib/constants'
 import { getEnv } from './env'
-
-function getMinterWallet() {
-  const env = getEnv()
-  const provider = new ethers.JsonRpcProvider(env.XLAYER_RPC)
-  return new ethers.Wallet(env.MINTER_PRIVATE_KEY, provider)
-}
+import { getMinterWallet } from './rpc'
 
 function getContract(wallet: ethers.Wallet) {
   const env = getEnv()

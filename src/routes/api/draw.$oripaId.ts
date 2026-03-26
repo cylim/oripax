@@ -123,6 +123,7 @@ export const Route = createFileRoute('/api/draw/$oripaId')({
           return jsonResponse({
             success: true,
             drawId: drawResult.drawId,
+            userAddress: payment.payerAddress,
             card: {
               cardId: drawResult.card.id,
               rarity: drawResult.card.rarity,

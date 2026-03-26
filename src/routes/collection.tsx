@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { OripaCard } from '~/components/OripaCard'
@@ -83,8 +83,23 @@ function CollectionPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 justify-items-center">
-          {filteredDraws.map((draw, i) => (
-            <OripaCard key={i} card={draw.card} size="md" />
+          {filteredDraws.map((draw: any, i: number) => (
+            <div key={i} className="flex flex-col items-center gap-1">
+              <OripaCard card={draw.card} size="md" />
+              <div className="flex items-center gap-2 text-[10px]">
+                <span className="text-white/30">#{draw.id}</span>
+                <Link
+                  to="/verify"
+                  search={{ drawId: String(draw.id) }}
+                  className="text-pachinko-blue/60 hover:text-pachinko-blue"
+                >
+                  Verify
+                </Link>
+                {draw.status === 'bought_back' && (
+                  <span className="text-pachinko-pink">Sold back</span>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       )}

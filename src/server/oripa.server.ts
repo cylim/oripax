@@ -428,7 +428,16 @@ export async function buybackDraw(
   const refundAmount = oripa.pricePerDraw * rate
 
   // Send USDC refund on-chain
-  const { txHash: refundTxHash } = await sendUsdtRefund(draw.userAddress, refundAmount)
+  console.log(`[buyback] Refunding ${refundAmount} USDC to ${draw.userAddress}`)
+  let refundTxHash: string
+  try {
+    const result = await sendUsdtRefund(draw.userAddress, refundAmount)
+    refundTxHash = result.txHash
+    console.log(`[buyback] Refund tx: ${refundTxHash}`)
+  } catch (err) {
+    console.error('[buyback] Refund failed:', err)
+    throw err
+  }
 
   // Optimistic update draw status
   const now = new Date().toISOString()

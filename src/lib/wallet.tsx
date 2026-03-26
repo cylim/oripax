@@ -31,7 +31,7 @@ async function getUI(): Promise<OKXUniversalConnectUIType> {
         theme: THEME.DARK,
       },
       actionsConfiguration: {
-        modals: 'all',
+        modals: 'before',
       },
       language: 'en_US',
     })

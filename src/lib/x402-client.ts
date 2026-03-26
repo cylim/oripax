@@ -2,6 +2,8 @@ import type { PaymentRequirements } from '~/server/x402.server'
 
 export interface DrawResult {
   success: boolean
+  drawId: number
+  userAddress: string
   card: {
     cardId: number
     rarity: string
@@ -20,8 +22,11 @@ export interface DrawResult {
   } | null
   remainingSlots: number
   totalSlots: number
-  txHash: string
-  explorerUrl: string
+  status: 'pending' | 'kept'
+  decisionDeadline: string | null
+  buybackAmount: number | null
+  txHash: string | null
+  explorerUrl: string | null
 }
 
 export async function handleX402Draw(
