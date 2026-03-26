@@ -1,4 +1,5 @@
 import { eq, isNull, sql, and, desc, lt } from 'drizzle-orm'
+import { ethers } from 'ethers'
 import type { Database } from './db'
 import { cards, draws, oripas, oripaSlots } from './schema'
 import { formatAddress } from '~/lib/utils'
@@ -84,23 +85,31 @@ export async function executeDraw(
   isLastOne: boolean
   remaining: number
   buybackAmount: number
+  proof: { serverSalt: string; selectedIndex: number; availableCount: number }
 }> {
+  // Generate server salt (unpredictable by user, committed before draw)
+  const serverSalt = ethers.hexlify(crypto.getRandomValues(new Uint8Array(32)))
+
   // Try up to 3 times (optimistic locking)
   for (let attempt = 0; attempt < 3; attempt++) {
-    // Get available slot count + IDs
+    // Get available slot count + IDs (sorted by id for deterministic ordering)
     const availableSlots = await db
       .select({ id: oripaSlots.id, cardId: oripaSlots.cardId, rarity: oripaSlots.rarity })
       .from(oripaSlots)
       .where(
         and(eq(oripaSlots.oripaId, oripaId), isNull(oripaSlots.pulledBy))
       )
+      .orderBy(oripaSlots.id)
 
     if (availableSlots.length === 0) {
       throw new Error('SOLD_OUT')
     }
 
-    // Pick random slot using CSPRNG (#11)
-    const randomIndex = secureRandomInt(availableSlots.length)
+    // Provably fair selection: keccak256(txHash + serverSalt) % availableCount
+    const hash = ethers.keccak256(
+      ethers.concat([ethers.getBytes(paymentTxHash), ethers.getBytes(serverSalt)])
+    )
+    const randomIndex = Number(BigInt(hash) % BigInt(availableSlots.length))
     const targetSlot = availableSlots[randomIndex]!
 
     // Optimistic update
@@ -147,7 +156,7 @@ export async function executeDraw(
         .where(and(eq(oripas.id, oripaId), eq(oripas.status, 'active')))
     }
 
-    // Insert draw record with paymentTxHash (#16)
+    // Insert draw record with proof
     const [drawRecord] = await db.insert(draws).values({
       oripaId,
       slotId: slot.id,
@@ -158,6 +167,9 @@ export async function executeDraw(
       isLastOne,
       status: isLastOne ? 'kept' : 'pending',
       decidedAt: isLastOne ? now : null,
+      serverSalt,
+      selectedIndex: randomIndex,
+      availableCount: availableSlots.length,
       createdAt: now,
     }).returning()
 
@@ -166,7 +178,8 @@ export async function executeDraw(
     const buybackRate = BUYBACK_RATES[slot.rarity] ?? 0
     const buybackAmount = oripa ? oripa.pricePerDraw * buybackRate : 0
 
-    return { drawId: drawRecord!.id, slot, card: card!, isLastOne, remaining, buybackAmount }
+    const proof = { serverSalt, selectedIndex: randomIndex, availableCount: availableSlots.length }
+    return { drawId: drawRecord!.id, slot, card: card!, isLastOne, remaining, buybackAmount, proof }
   }
 
   throw new Error('DRAW_CONFLICT')

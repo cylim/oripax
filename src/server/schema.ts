@@ -65,6 +65,9 @@ export const draws = sqliteTable(
     decidedAt: text('decided_at'),
     buybackTxHash: text('buyback_tx_hash'),
     buybackAmount: real('buyback_amount'),
+    serverSalt: text('server_salt'),
+    selectedIndex: integer('selected_index'),
+    availableCount: integer('available_count'),
     createdAt: text('created_at').notNull().default(''),
   },
   (table) => [

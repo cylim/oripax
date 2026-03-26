@@ -1,7 +1,7 @@
 export const XLAYER_CHAIN_ID = 196
 export const XLAYER_RPC = 'https://rpc.xlayer.tech'
 export const XLAYER_EXPLORER = 'https://www.oklink.com/xlayer'
-export const CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'
+export const CONTRACT_ADDRESS = '0xf931144Fc0Ae7d2dA8bf4cd5FF0cb102Fc921d6B'
 export const USDC_CONTRACT_ADDRESS = '0x74b7f16337b8972027f6196a17a631ac6de26d22'
 
 /** Prices per draw in USDC (demo values — represent $50, $200, $500 pools). */

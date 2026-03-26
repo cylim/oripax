@@ -142,6 +142,12 @@ export const Route = createFileRoute('/api/draw/$oripaId')({
             txHash: mintResult.txHash,
             explorerUrl: mintResult.explorerUrl,
             mintPending: drawResult.isLastOne ? !mintResult.txHash : true,
+            proof: {
+              paymentTxHash: payment.txHash,
+              serverSalt: drawResult.proof.serverSalt,
+              selectedIndex: drawResult.proof.selectedIndex,
+              availableCount: drawResult.proof.availableCount,
+            },
           })
         } catch (err) {
           console.error('Draw error:', err) // log internally only (#13)

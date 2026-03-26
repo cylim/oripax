@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as CardsRouteImport } from './routes/cards'
@@ -21,6 +22,7 @@ import { Route as ApiOripasRouteImport } from './routes/api/oripas'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiCardsRouteImport } from './routes/api/cards'
 import { Route as AdminCreateRouteImport } from './routes/admin.create'
+import { Route as ApiVerifyDrawIdRouteImport } from './routes/api/verify.$drawId'
 import { Route as ApiOripaIdRouteImport } from './routes/api/oripa.$id'
 import { Route as ApiMetadataCardIdRouteImport } from './routes/api/metadata.$cardId'
 import { Route as ApiDrawsRecentRouteImport } from './routes/api/draws.recent'
@@ -41,6 +43,11 @@ import { Route as ApiAdminAuthChallengeRouteImport } from './routes/api/admin.au
 import { Route as ApiAdminOripaIdResetRouteImport } from './routes/api/admin.oripa.$id.reset'
 import { Route as ApiAdminOripaIdRefillRouteImport } from './routes/api/admin.oripa.$id.refill'
 
+const VerifyRoute = VerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
@@ -100,6 +107,11 @@ const AdminCreateRoute = AdminCreateRouteImport.update({
   id: '/create',
   path: '/create',
   getParentRoute: () => AdminRoute,
+} as any)
+const ApiVerifyDrawIdRoute = ApiVerifyDrawIdRouteImport.update({
+  id: '/api/verify/$drawId',
+  path: '/api/verify/$drawId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOripaIdRoute = ApiOripaIdRouteImport.update({
   id: '/api/oripa/$id',
@@ -203,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/cards': typeof CardsRoute
   '/collection': typeof CollectionRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/verify': typeof VerifyRoute
   '/admin/create': typeof AdminCreateRoute
   '/api/cards': typeof ApiCardsRoute
   '/api/health': typeof ApiHealthRoute
@@ -219,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/api/draws/recent': typeof ApiDrawsRecentRoute
   '/api/metadata/$cardId': typeof ApiMetadataCardIdRoute
   '/api/oripa/$id': typeof ApiOripaIdRouteWithChildren
+  '/api/verify/$drawId': typeof ApiVerifyDrawIdRoute
   '/api/admin/auth/challenge': typeof ApiAdminAuthChallengeRoute
   '/api/admin/auth/login': typeof ApiAdminAuthLoginRoute
   '/api/admin/auth/logout': typeof ApiAdminAuthLogoutRoute
@@ -235,6 +249,7 @@ export interface FileRoutesByTo {
   '/cards': typeof CardsRoute
   '/collection': typeof CollectionRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/verify': typeof VerifyRoute
   '/admin/create': typeof AdminCreateRoute
   '/api/cards': typeof ApiCardsRoute
   '/api/health': typeof ApiHealthRoute
@@ -251,6 +266,7 @@ export interface FileRoutesByTo {
   '/api/draws/recent': typeof ApiDrawsRecentRoute
   '/api/metadata/$cardId': typeof ApiMetadataCardIdRoute
   '/api/oripa/$id': typeof ApiOripaIdRouteWithChildren
+  '/api/verify/$drawId': typeof ApiVerifyDrawIdRoute
   '/api/admin/auth/challenge': typeof ApiAdminAuthChallengeRoute
   '/api/admin/auth/login': typeof ApiAdminAuthLoginRoute
   '/api/admin/auth/logout': typeof ApiAdminAuthLogoutRoute
@@ -269,6 +285,7 @@ export interface FileRoutesById {
   '/cards': typeof CardsRoute
   '/collection': typeof CollectionRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/verify': typeof VerifyRoute
   '/admin/create': typeof AdminCreateRoute
   '/api/cards': typeof ApiCardsRoute
   '/api/health': typeof ApiHealthRoute
@@ -285,6 +302,7 @@ export interface FileRoutesById {
   '/api/draws/recent': typeof ApiDrawsRecentRoute
   '/api/metadata/$cardId': typeof ApiMetadataCardIdRoute
   '/api/oripa/$id': typeof ApiOripaIdRouteWithChildren
+  '/api/verify/$drawId': typeof ApiVerifyDrawIdRoute
   '/api/admin/auth/challenge': typeof ApiAdminAuthChallengeRoute
   '/api/admin/auth/login': typeof ApiAdminAuthLoginRoute
   '/api/admin/auth/logout': typeof ApiAdminAuthLogoutRoute
@@ -304,6 +322,7 @@ export interface FileRouteTypes {
     | '/cards'
     | '/collection'
     | '/leaderboard'
+    | '/verify'
     | '/admin/create'
     | '/api/cards'
     | '/api/health'
@@ -320,6 +339,7 @@ export interface FileRouteTypes {
     | '/api/draws/recent'
     | '/api/metadata/$cardId'
     | '/api/oripa/$id'
+    | '/api/verify/$drawId'
     | '/api/admin/auth/challenge'
     | '/api/admin/auth/login'
     | '/api/admin/auth/logout'
@@ -336,6 +356,7 @@ export interface FileRouteTypes {
     | '/cards'
     | '/collection'
     | '/leaderboard'
+    | '/verify'
     | '/admin/create'
     | '/api/cards'
     | '/api/health'
@@ -352,6 +373,7 @@ export interface FileRouteTypes {
     | '/api/draws/recent'
     | '/api/metadata/$cardId'
     | '/api/oripa/$id'
+    | '/api/verify/$drawId'
     | '/api/admin/auth/challenge'
     | '/api/admin/auth/login'
     | '/api/admin/auth/logout'
@@ -369,6 +391,7 @@ export interface FileRouteTypes {
     | '/cards'
     | '/collection'
     | '/leaderboard'
+    | '/verify'
     | '/admin/create'
     | '/api/cards'
     | '/api/health'
@@ -385,6 +408,7 @@ export interface FileRouteTypes {
     | '/api/draws/recent'
     | '/api/metadata/$cardId'
     | '/api/oripa/$id'
+    | '/api/verify/$drawId'
     | '/api/admin/auth/challenge'
     | '/api/admin/auth/login'
     | '/api/admin/auth/logout'
@@ -403,6 +427,7 @@ export interface RootRouteChildren {
   CardsRoute: typeof CardsRoute
   CollectionRoute: typeof CollectionRoute
   LeaderboardRoute: typeof LeaderboardRoute
+  VerifyRoute: typeof VerifyRoute
   ApiCardsRoute: typeof ApiCardsRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiOripasRoute: typeof ApiOripasRoute
@@ -416,6 +441,7 @@ export interface RootRouteChildren {
   ApiDrawsRecentRoute: typeof ApiDrawsRecentRoute
   ApiMetadataCardIdRoute: typeof ApiMetadataCardIdRoute
   ApiOripaIdRoute: typeof ApiOripaIdRouteWithChildren
+  ApiVerifyDrawIdRoute: typeof ApiVerifyDrawIdRoute
   ApiAdminAuthChallengeRoute: typeof ApiAdminAuthChallengeRoute
   ApiAdminAuthLoginRoute: typeof ApiAdminAuthLoginRoute
   ApiAdminAuthLogoutRoute: typeof ApiAdminAuthLogoutRoute
@@ -429,6 +455,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/leaderboard': {
       id: '/leaderboard'
       path: '/leaderboard'
@@ -512,6 +545,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/create'
       preLoaderRoute: typeof AdminCreateRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/api/verify/$drawId': {
+      id: '/api/verify/$drawId'
+      path: '/api/verify/$drawId'
+      fullPath: '/api/verify/$drawId'
+      preLoaderRoute: typeof ApiVerifyDrawIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/oripa/$id': {
       id: '/api/oripa/$id'
@@ -681,6 +721,7 @@ const rootRouteChildren: RootRouteChildren = {
   CardsRoute: CardsRoute,
   CollectionRoute: CollectionRoute,
   LeaderboardRoute: LeaderboardRoute,
+  VerifyRoute: VerifyRoute,
   ApiCardsRoute: ApiCardsRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiOripasRoute: ApiOripasRoute,
@@ -694,6 +735,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDrawsRecentRoute: ApiDrawsRecentRoute,
   ApiMetadataCardIdRoute: ApiMetadataCardIdRoute,
   ApiOripaIdRoute: ApiOripaIdRouteWithChildren,
+  ApiVerifyDrawIdRoute: ApiVerifyDrawIdRoute,
   ApiAdminAuthChallengeRoute: ApiAdminAuthChallengeRoute,
   ApiAdminAuthLoginRoute: ApiAdminAuthLoginRoute,
   ApiAdminAuthLogoutRoute: ApiAdminAuthLogoutRoute,

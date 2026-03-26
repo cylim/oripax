@@ -49,6 +49,13 @@ export function Navbar() {
           >
             Leaderboard
           </Link>
+          <Link
+            to="/verify"
+            className="text-sm text-white/70 hover:text-pachinko-gold transition-colors"
+            activeProps={{ className: 'text-sm text-pachinko-gold neon-glow' }}
+          >
+            Fair
+          </Link>
 
           <button
             onClick={() => {
