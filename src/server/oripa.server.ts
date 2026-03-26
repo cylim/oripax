@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 import type { Database } from './db'
 import { cards, draws, oripas, oripaSlots } from './schema'
 import { formatAddress } from '~/lib/utils'
-import { BUYBACK_RATES, BUYBACK_WINDOW_MS } from '~/lib/constants'
+import { BUYBACK_RATES, BUYBACK_WINDOW_MS, RARITY_ORDER } from '~/lib/constants'
 import { mintCardOnChain } from './mint.server'
 import { sendUsdtRefund } from './refund.server'
 
@@ -199,15 +199,18 @@ export async function getPoolStatus(db: Database, oripaId: number) {
   const remaining = available.length
 
   const remainingByRarity: Record<string, number> = {}
+  for (const r of RARITY_ORDER) {
+    remainingByRarity[r] = 0
+  }
   for (const slot of available) {
     remainingByRarity[slot.rarity] = (remainingByRarity[slot.rarity] || 0) + 1
   }
 
   const currentOdds: Record<string, string> = {}
-  if (remaining > 0) {
-    for (const [rarity, count] of Object.entries(remainingByRarity)) {
-      currentOdds[rarity] = ((count / remaining) * 100).toFixed(1) + '%'
-    }
+  for (const r of RARITY_ORDER) {
+    currentOdds[r] = remaining > 0
+      ? (((remainingByRarity[r] || 0) / remaining) * 100).toFixed(1) + '%'
+      : '0.0%'
   }
 
   // Truncate wallet addresses in recent pulls (#18)
@@ -457,18 +460,6 @@ export async function buybackDraw(
     .returning()
 
   if (updated.length === 0) throw new Error('ALREADY_DECIDED')
-
-  // Return slot to pool
-  await db
-    .update(oripaSlots)
-    .set({ pulledBy: null, pulledAt: null })
-    .where(eq(oripaSlots.id, draw.slotId))
-
-  // If oripa was sold_out, reactivate it
-  await db
-    .update(oripas)
-    .set({ status: 'active' })
-    .where(and(eq(oripas.id, draw.oripaId), eq(oripas.status, 'sold_out')))
 
   return { refundAmount, refundTxHash }
 }

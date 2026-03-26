@@ -68,7 +68,8 @@ function OripaDrawPage() {
   }
 
   const handleBallLand = useCallback(() => {
-    setDrawState('revealing')
+    // Let the ball visually settle before revealing the card
+    setTimeout(() => setDrawState('revealing'), 1200)
   }, [])
 
   const handleRevealClose = useCallback(() => {
@@ -151,9 +152,9 @@ function OripaDrawPage() {
         )}
       </div>
 
-      {/* Card Reveal Modal */}
+      {/* Card Reveal Modal — only after ball has landed */}
       <CardReveal
-        card={drawResult?.card ?? null}
+        card={drawState === 'revealing' ? drawResult?.card ?? null : null}
         isLastOne={drawResult?.isLastOne ?? false}
         onClose={handleRevealClose}
       />
