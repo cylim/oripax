@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { getDb } from '~/server/db'
 import { getEnv, initEnv } from '~/server/env'
 import { getRecentDraws } from '~/server/oripa.server'
+import { jsonResponse, errorResponse } from '~/server/response'
 
 export const Route = createFileRoute('/api/draws/recent')({
   server: {
@@ -11,15 +12,10 @@ export const Route = createFileRoute('/api/draws/recent')({
           await initEnv()
           const env = getEnv()
           const db = getDb(env.DB)
-          const draws = await getRecentDraws(db, 20)
-          return new Response(JSON.stringify(draws), {
-            headers: { 'Content-Type': 'application/json' },
-          })
+          return jsonResponse(await getRecentDraws(db, 20))
         } catch (err) {
-          return new Response(
-            JSON.stringify({ error: err instanceof Error ? err.message : 'Failed to fetch draws' }),
-            { status: 500, headers: { 'Content-Type': 'application/json' } }
-          )
+          console.error('Recent draws error:', err)
+          return errorResponse('Internal server error')
         }
       },
     },

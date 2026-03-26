@@ -40,6 +40,16 @@ export const RARITY_LABELS: Record<RarityType, string> = {
   last_one: 'ラストワン',
 }
 
+export const BUYBACK_RATES: Record<string, number> = {
+  common: 0.20,
+  uncommon: 0.30,
+  rare: 0.50,
+  ultra_rare: 0.80,
+  secret_rare: 0.90,
+}
+
+export const BUYBACK_WINDOW_MS = 5 * 60 * 1000 // 5 minutes
+
 export const RARITY_ORDER: RarityType[] = [
   'common',
   'uncommon',

@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { getDb } from '~/server/db'
 import { getEnv, initEnv } from '~/server/env'
 import { getPoolStatus } from '~/server/oripa.server'
+import { jsonResponse, errorResponse } from '~/server/response'
 
 export const Route = createFileRoute('/api/oripa/$id/pool')({
   server: {
@@ -11,23 +12,15 @@ export const Route = createFileRoute('/api/oripa/$id/pool')({
           await initEnv()
           const env = getEnv()
           const db = getDb(env.DB)
-          const pool = await getPoolStatus(db, parseInt(params.id))
+          const id = parseInt(params.id)
+          if (Number.isNaN(id) || id <= 0) return errorResponse('Invalid oripa ID', 400)
 
-          if (!pool) {
-            return new Response(JSON.stringify({ error: 'Oripa not found' }), {
-              status: 404,
-              headers: { 'Content-Type': 'application/json' },
-            })
-          }
-
-          return new Response(JSON.stringify(pool), {
-            headers: { 'Content-Type': 'application/json' },
-          })
+          const pool = await getPoolStatus(db, id)
+          if (!pool) return errorResponse('Oripa not found', 404)
+          return jsonResponse(pool)
         } catch (err) {
-          return new Response(
-            JSON.stringify({ error: err instanceof Error ? err.message : 'Failed to fetch pool' }),
-            { status: 500, headers: { 'Content-Type': 'application/json' } }
-          )
+          console.error('Pool error:', err)
+          return errorResponse('Internal server error')
         }
       },
     },

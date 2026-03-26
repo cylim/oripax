@@ -1,6 +1,10 @@
-import { eq, isNull, sql, and, desc } from 'drizzle-orm'
+import { eq, isNull, sql, and, desc, lt } from 'drizzle-orm'
 import type { Database } from './db'
 import { cards, draws, oripas, oripaSlots } from './schema'
+import { formatAddress } from '~/lib/utils'
+import { BUYBACK_RATES, BUYBACK_WINDOW_MS } from '~/lib/constants'
+import { mintCardOnChain } from './mint.server'
+import { sendUsdtRefund } from './refund.server'
 
 export interface CreateOripaConfig {
   name: string
@@ -8,6 +12,17 @@ export interface CreateOripaConfig {
   pricePerDraw: number
   lastOnePrize: { cardId: number; name: string; imageUri: string }
   slotDistribution: Array<{ cardId: number; rarity: string; count: number }>
+}
+
+// Rejection-sampling random integer to avoid modulo bias
+function secureRandomInt(max: number): number {
+  const buf = new Uint32Array(1)
+  const limit = (0x100000000 - (0x100000000 % max)) >>> 0
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    crypto.getRandomValues(buf)
+    if (buf[0]! < limit) return buf[0]! % max
+  }
 }
 
 export async function createOripaPool(db: Database, config: CreateOripaConfig) {
@@ -31,11 +46,9 @@ export async function createOripaPool(db: Database, config: CreateOripaConfig) {
     }
   }
 
-  // Fisher-Yates shuffle with crypto randomness
-  const randomValues = new Uint32Array(slots.length)
-  crypto.getRandomValues(randomValues)
+  // Fisher-Yates shuffle with unbiased crypto randomness (#10)
   for (let i = slots.length - 1; i > 0; i--) {
-    const j = randomValues[i]! % (i + 1)
+    const j = secureRandomInt(i + 1)
     ;[slots[i]!, slots[j]!] = [slots[j]!, slots[i]!]
   }
 
@@ -58,18 +71,21 @@ export async function createOripaPool(db: Database, config: CreateOripaConfig) {
 export async function executeDraw(
   db: Database,
   oripaId: number,
-  userAddress: string
+  userAddress: string,
+  paymentTxHash: string
 ): Promise<{
+  drawId: number
   slot: typeof oripaSlots.$inferSelect
   card: typeof cards.$inferSelect
   isLastOne: boolean
   remaining: number
+  buybackAmount: number
 }> {
   // Try up to 3 times (optimistic locking)
   for (let attempt = 0; attempt < 3; attempt++) {
-    // Get a random available slot
+    // Get available slot count + IDs
     const availableSlots = await db
-      .select()
+      .select({ id: oripaSlots.id, cardId: oripaSlots.cardId, rarity: oripaSlots.rarity })
       .from(oripaSlots)
       .where(
         and(eq(oripaSlots.oripaId, oripaId), isNull(oripaSlots.pulledBy))
@@ -79,8 +95,8 @@ export async function executeDraw(
       throw new Error('SOLD_OUT')
     }
 
-    // Pick random slot
-    const randomIndex = Math.floor(Math.random() * availableSlots.length)
+    // Pick random slot using CSPRNG (#11)
+    const randomIndex = secureRandomInt(availableSlots.length)
     const targetSlot = availableSlots[randomIndex]!
 
     // Optimistic update
@@ -108,7 +124,7 @@ export async function executeDraw(
       .from(cards)
       .where(eq(cards.id, slot.cardId))
 
-    // Check remaining
+    // Check remaining — D1/SQLite single-writer makes this consistent after the update (#9)
     const [countResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(oripaSlots)
@@ -119,26 +135,34 @@ export async function executeDraw(
     const remaining = countResult?.count ?? 0
     const isLastOne = remaining === 0
 
-    // If last one, mark oripa as sold out
+    // If last one, mark oripa as sold out (compare-and-swap for safety #9)
     if (isLastOne) {
       await db
         .update(oripas)
         .set({ status: 'sold_out' })
-        .where(eq(oripas.id, oripaId))
+        .where(and(eq(oripas.id, oripaId), eq(oripas.status, 'active')))
     }
 
-    // Insert draw record
-    await db.insert(draws).values({
+    // Insert draw record with paymentTxHash (#16)
+    const [drawRecord] = await db.insert(draws).values({
       oripaId,
       slotId: slot.id,
       cardId: slot.cardId,
       rarity: slot.rarity,
       userAddress,
+      paymentTxHash,
       isLastOne,
+      status: isLastOne ? 'kept' : 'pending',
+      decidedAt: isLastOne ? now : null,
       createdAt: now,
-    })
+    }).returning()
 
-    return { slot, card: card!, isLastOne, remaining }
+    // Fetch oripa for buyback calculation
+    const [oripa] = await db.select().from(oripas).where(eq(oripas.id, oripaId))
+    const buybackRate = BUYBACK_RATES[slot.rarity] ?? 0
+    const buybackAmount = oripa ? oripa.pricePerDraw * buybackRate : 0
+
+    return { drawId: drawRecord!.id, slot, card: card!, isLastOne, remaining, buybackAmount }
   }
 
   throw new Error('DRAW_CONFLICT')
@@ -169,13 +193,14 @@ export async function getPoolStatus(db: Database, oripaId: number) {
     }
   }
 
+  // Truncate wallet addresses in recent pulls (#18)
   const recentPulls = allSlots
     .filter((s) => s.pulledBy)
     .sort((a, b) => (b.pulledAt || '').localeCompare(a.pulledAt || ''))
     .slice(0, 5)
     .map((s) => ({
       rarity: s.rarity,
-      pulledBy: s.pulledBy!,
+      pulledBy: formatAddress(s.pulledBy!),
       slotIndex: s.slotIndex,
     }))
 
@@ -186,6 +211,20 @@ export async function getPoolStatus(db: Database, oripaId: number) {
     remainingByRarity,
     currentOdds,
     recentPulls,
+  }
+}
+
+interface LastOnePrize {
+  cardId: number
+  name: string
+  imageUri: string
+}
+
+function parseLastOnePrize(str: string): LastOnePrize {
+  try {
+    return JSON.parse(str) as LastOnePrize
+  } catch {
+    return { cardId: 0, name: 'Unknown Prize', imageUri: '' }
   }
 }
 
@@ -205,7 +244,7 @@ export async function getActiveOripas(db: Database) {
       )
     result.push({
       ...oripa,
-      lastOnePrize: JSON.parse(oripa.lastOnePrize),
+      lastOnePrize: parseLastOnePrize(oripa.lastOnePrize), // #19
       remaining: countResult?.count ?? 0,
     })
   }
@@ -221,7 +260,7 @@ export async function getOripaById(db: Database, oripaId: number) {
 
   return {
     ...oripa,
-    lastOnePrize: JSON.parse(oripa.lastOnePrize),
+    lastOnePrize: parseLastOnePrize(oripa.lastOnePrize), // #19
     pool,
   }
 }
@@ -239,6 +278,7 @@ export async function getRecentDraws(db: Database, limit = 20) {
 
   return recentDraws.map(({ draw, card }) => ({
     ...draw,
+    userAddress: formatAddress(draw.userAddress), // #18
     card,
   }))
 }
@@ -277,13 +317,187 @@ export async function getGlobalStats(db: Database) {
     .orderBy(desc(draws.createdAt))
     .limit(10)
 
+  const [buybackCount] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(draws)
+    .where(eq(draws.status, 'bought_back'))
+
   return {
     totalDraws: drawCount?.count ?? 0,
     totalLastOneWins: lastOneCount?.count ?? 0,
+    totalBuybacks: buybackCount?.count ?? 0,
     lastOneWinners: lastOneWinners.map((d) => ({
-      address: d.userAddress,
+      address: formatAddress(d.userAddress), // #18
       oripaId: d.oripaId,
       date: d.createdAt,
     })),
+  }
+}
+
+// --- Keep / Buyback ---
+
+export async function keepDraw(
+  db: Database,
+  drawId: number,
+  userAddress: string,
+  baseUrl: string
+): Promise<{
+  txHash: string | null
+  tokenId: number | null
+  explorerUrl: string | null
+  mintPending: boolean
+}> {
+  const [draw] = await db.select().from(draws).where(eq(draws.id, drawId))
+  if (!draw) throw new Error('DRAW_NOT_FOUND')
+  if (draw.userAddress.toLowerCase() !== userAddress.toLowerCase()) throw new Error('NOT_OWNER')
+  if (draw.status !== 'pending') throw new Error('ALREADY_DECIDED')
+
+  const elapsed = Date.now() - new Date(draw.createdAt).getTime()
+  if (elapsed > BUYBACK_WINDOW_MS) throw new Error('WINDOW_EXPIRED')
+
+  // Optimistic update
+  const now = new Date().toISOString()
+  const updated = await db
+    .update(draws)
+    .set({ status: 'kept', decidedAt: now })
+    .where(and(eq(draws.id, drawId), eq(draws.status, 'pending')))
+    .returning()
+
+  if (updated.length === 0) throw new Error('ALREADY_DECIDED')
+
+  // Mint NFT
+  try {
+    const [card] = await db.select().from(cards).where(eq(cards.id, draw.cardId))
+    const mintResult = await mintCardOnChain(
+      draw.userAddress,
+      draw.oripaId,
+      card!.id,
+      card!.rarity,
+      baseUrl
+    )
+    if (mintResult.txHash) {
+      await db.update(draws)
+        .set({ txHash: mintResult.txHash, mintedTokenId: mintResult.tokenId })
+        .where(eq(draws.id, drawId))
+    }
+    return { ...mintResult, mintPending: false }
+  } catch {
+    return { txHash: null, tokenId: null, explorerUrl: null, mintPending: true }
+  }
+}
+
+export async function buybackDraw(
+  db: Database,
+  drawId: number,
+  userAddress: string
+): Promise<{
+  refundAmount: number
+  refundTxHash: string
+}> {
+  const [draw] = await db.select().from(draws).where(eq(draws.id, drawId))
+  if (!draw) throw new Error('DRAW_NOT_FOUND')
+  if (draw.userAddress.toLowerCase() !== userAddress.toLowerCase()) throw new Error('NOT_OWNER')
+  if (draw.status !== 'pending') throw new Error('ALREADY_DECIDED')
+  if (draw.isLastOne) throw new Error('CANNOT_BUYBACK_LAST_ONE')
+
+  const elapsed = Date.now() - new Date(draw.createdAt).getTime()
+  if (elapsed > BUYBACK_WINDOW_MS) throw new Error('WINDOW_EXPIRED')
+
+  // Get oripa for price
+  const [oripa] = await db.select().from(oripas).where(eq(oripas.id, draw.oripaId))
+  if (!oripa) throw new Error('ORIPA_NOT_FOUND')
+
+  const rate = BUYBACK_RATES[draw.rarity] ?? 0
+  const refundAmount = oripa.pricePerDraw * rate
+
+  // Send USDT refund on-chain
+  const { txHash: refundTxHash } = await sendUsdtRefund(draw.userAddress, refundAmount)
+
+  // Optimistic update draw status
+  const now = new Date().toISOString()
+  const updated = await db
+    .update(draws)
+    .set({
+      status: 'bought_back',
+      decidedAt: now,
+      buybackTxHash: refundTxHash,
+      buybackAmount: refundAmount,
+    })
+    .where(and(eq(draws.id, drawId), eq(draws.status, 'pending')))
+    .returning()
+
+  if (updated.length === 0) throw new Error('ALREADY_DECIDED')
+
+  // Return slot to pool
+  await db
+    .update(oripaSlots)
+    .set({ pulledBy: null, pulledAt: null })
+    .where(eq(oripaSlots.id, draw.slotId))
+
+  // If oripa was sold_out, reactivate it
+  await db
+    .update(oripas)
+    .set({ status: 'active' })
+    .where(and(eq(oripas.id, draw.oripaId), eq(oripas.status, 'sold_out')))
+
+  return { refundAmount, refundTxHash }
+}
+
+export async function autoKeepExpiredDraws(db: Database, baseUrl: string) {
+  const cutoff = new Date(Date.now() - BUYBACK_WINDOW_MS).toISOString()
+  const expired = await db
+    .select()
+    .from(draws)
+    .where(and(eq(draws.status, 'pending'), lt(draws.createdAt, cutoff)))
+
+  for (const draw of expired) {
+    try {
+      await keepDraw(db, draw.id, draw.userAddress, baseUrl)
+    } catch (err) {
+      // Will retry on next invocation
+      console.error(`Auto-keep failed for draw ${draw.id}:`, err)
+    }
+  }
+
+  return expired.length
+}
+
+export async function getDrawStatus(db: Database, drawId: number, userAddress: string) {
+  const [draw] = await db
+    .select({ draw: draws, card: cards })
+    .from(draws)
+    .innerJoin(cards, eq(draws.cardId, cards.id))
+    .where(eq(draws.id, drawId))
+
+  if (!draw) return null
+  if (draw.draw.userAddress.toLowerCase() !== userAddress.toLowerCase()) return null
+
+  const [oripa] = await db.select().from(oripas).where(eq(oripas.id, draw.draw.oripaId))
+  const rate = BUYBACK_RATES[draw.draw.rarity] ?? 0
+  const buybackAmount = oripa ? oripa.pricePerDraw * rate : 0
+
+  const createdMs = new Date(draw.draw.createdAt).getTime()
+  const deadlineMs = createdMs + BUYBACK_WINDOW_MS
+  const timeRemainingMs = Math.max(0, deadlineMs - Date.now())
+
+  return {
+    drawId: draw.draw.id,
+    status: draw.draw.status,
+    card: {
+      cardId: draw.card.id,
+      rarity: draw.card.rarity,
+      name: draw.card.name,
+      imageUri: draw.card.imageUri,
+      element: draw.card.element,
+      attack: draw.card.attack,
+      defense: draw.card.defense,
+    },
+    isLastOne: draw.draw.isLastOne,
+    buybackAmount,
+    decisionDeadline: new Date(deadlineMs).toISOString(),
+    timeRemainingMs,
+    txHash: draw.draw.txHash,
+    mintedTokenId: draw.draw.mintedTokenId,
+    buybackTxHash: draw.draw.buybackTxHash,
   }
 }

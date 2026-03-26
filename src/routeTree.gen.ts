@@ -24,6 +24,8 @@ import { Route as ApiCardImageCardIdRouteImport } from './routes/api/card-image.
 import { Route as ApiAdminSeedRouteImport } from './routes/api/admin.seed'
 import { Route as ApiOripaIdPoolRouteImport } from './routes/api/oripa.$id.pool'
 import { Route as ApiDrawsUserAddressRouteImport } from './routes/api/draws.user.$address'
+import { Route as ApiDrawsStatusDrawIdRouteImport } from './routes/api/draws.status.$drawId'
+import { Route as ApiDrawsDecideDrawIdRouteImport } from './routes/api/draws.decide.$drawId'
 
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
@@ -100,6 +102,16 @@ const ApiDrawsUserAddressRoute = ApiDrawsUserAddressRouteImport.update({
   path: '/api/draws/user/$address',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDrawsStatusDrawIdRoute = ApiDrawsStatusDrawIdRouteImport.update({
+  id: '/api/draws/status/$drawId',
+  path: '/api/draws/status/$drawId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDrawsDecideDrawIdRoute = ApiDrawsDecideDrawIdRouteImport.update({
+  id: '/api/draws/decide/$drawId',
+  path: '/api/draws/decide/$drawId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -115,6 +127,8 @@ export interface FileRoutesByFullPath {
   '/api/draws/recent': typeof ApiDrawsRecentRoute
   '/api/metadata/$cardId': typeof ApiMetadataCardIdRoute
   '/api/oripa/$id': typeof ApiOripaIdRouteWithChildren
+  '/api/draws/decide/$drawId': typeof ApiDrawsDecideDrawIdRoute
+  '/api/draws/status/$drawId': typeof ApiDrawsStatusDrawIdRoute
   '/api/draws/user/$address': typeof ApiDrawsUserAddressRoute
   '/api/oripa/$id/pool': typeof ApiOripaIdPoolRoute
 }
@@ -132,6 +146,8 @@ export interface FileRoutesByTo {
   '/api/draws/recent': typeof ApiDrawsRecentRoute
   '/api/metadata/$cardId': typeof ApiMetadataCardIdRoute
   '/api/oripa/$id': typeof ApiOripaIdRouteWithChildren
+  '/api/draws/decide/$drawId': typeof ApiDrawsDecideDrawIdRoute
+  '/api/draws/status/$drawId': typeof ApiDrawsStatusDrawIdRoute
   '/api/draws/user/$address': typeof ApiDrawsUserAddressRoute
   '/api/oripa/$id/pool': typeof ApiOripaIdPoolRoute
 }
@@ -150,6 +166,8 @@ export interface FileRoutesById {
   '/api/draws/recent': typeof ApiDrawsRecentRoute
   '/api/metadata/$cardId': typeof ApiMetadataCardIdRoute
   '/api/oripa/$id': typeof ApiOripaIdRouteWithChildren
+  '/api/draws/decide/$drawId': typeof ApiDrawsDecideDrawIdRoute
+  '/api/draws/status/$drawId': typeof ApiDrawsStatusDrawIdRoute
   '/api/draws/user/$address': typeof ApiDrawsUserAddressRoute
   '/api/oripa/$id/pool': typeof ApiOripaIdPoolRoute
 }
@@ -169,6 +187,8 @@ export interface FileRouteTypes {
     | '/api/draws/recent'
     | '/api/metadata/$cardId'
     | '/api/oripa/$id'
+    | '/api/draws/decide/$drawId'
+    | '/api/draws/status/$drawId'
     | '/api/draws/user/$address'
     | '/api/oripa/$id/pool'
   fileRoutesByTo: FileRoutesByTo
@@ -186,6 +206,8 @@ export interface FileRouteTypes {
     | '/api/draws/recent'
     | '/api/metadata/$cardId'
     | '/api/oripa/$id'
+    | '/api/draws/decide/$drawId'
+    | '/api/draws/status/$drawId'
     | '/api/draws/user/$address'
     | '/api/oripa/$id/pool'
   id:
@@ -203,6 +225,8 @@ export interface FileRouteTypes {
     | '/api/draws/recent'
     | '/api/metadata/$cardId'
     | '/api/oripa/$id'
+    | '/api/draws/decide/$drawId'
+    | '/api/draws/status/$drawId'
     | '/api/draws/user/$address'
     | '/api/oripa/$id/pool'
   fileRoutesById: FileRoutesById
@@ -221,6 +245,8 @@ export interface RootRouteChildren {
   ApiDrawsRecentRoute: typeof ApiDrawsRecentRoute
   ApiMetadataCardIdRoute: typeof ApiMetadataCardIdRoute
   ApiOripaIdRoute: typeof ApiOripaIdRouteWithChildren
+  ApiDrawsDecideDrawIdRoute: typeof ApiDrawsDecideDrawIdRoute
+  ApiDrawsStatusDrawIdRoute: typeof ApiDrawsStatusDrawIdRoute
   ApiDrawsUserAddressRoute: typeof ApiDrawsUserAddressRoute
 }
 
@@ -331,6 +357,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDrawsUserAddressRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/draws/status/$drawId': {
+      id: '/api/draws/status/$drawId'
+      path: '/api/draws/status/$drawId'
+      fullPath: '/api/draws/status/$drawId'
+      preLoaderRoute: typeof ApiDrawsStatusDrawIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/draws/decide/$drawId': {
+      id: '/api/draws/decide/$drawId'
+      path: '/api/draws/decide/$drawId'
+      fullPath: '/api/draws/decide/$drawId'
+      preLoaderRoute: typeof ApiDrawsDecideDrawIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -360,6 +400,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDrawsRecentRoute: ApiDrawsRecentRoute,
   ApiMetadataCardIdRoute: ApiMetadataCardIdRoute,
   ApiOripaIdRoute: ApiOripaIdRouteWithChildren,
+  ApiDrawsDecideDrawIdRoute: ApiDrawsDecideDrawIdRoute,
+  ApiDrawsStatusDrawIdRoute: ApiDrawsStatusDrawIdRoute,
   ApiDrawsUserAddressRoute: ApiDrawsUserAddressRoute,
 }
 export const routeTree = rootRouteImport

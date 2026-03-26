@@ -8,6 +8,20 @@
       "when": 1773831139509,
       "tag": "0000_redundant_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1773980670924,
+      "tag": "0001_overconfident_psynapse",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1774449422840,
+      "tag": "0002_shiny_spencer_smythe",
+      "breakpoints": true
     }
   ]
 }

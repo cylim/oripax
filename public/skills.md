@@ -56,11 +56,13 @@ curl https://oripax.example.com/api/stats
 | GET    | /api/oripas           | None | List active oripas            |
 | GET    | /api/oripa/:id        | None | Single oripa detail with pool |
 | GET    | /api/oripa/:id/pool   | None | Pool status with live odds    |
-| GET    | /api/draw/:oripaId    | x402 | Draw a card (pay USDT)        |
-| GET    | /api/draws/recent     | None | Recent draws                  |
-| GET    | /api/draws/user/:addr | None | User's draw history           |
-| GET    | /api/stats            | None | Global statistics             |
-| GET    | /api/metadata/:cardId | None | ERC-721 metadata JSON         |
+| GET    | /api/draw/:oripaId          | x402 | Draw a card (pay USDT)              |
+| POST   | /api/draws/decide/:drawId   | None | Keep or buyback a pending draw      |
+| GET    | /api/draws/status/:drawId   | None | Check pending draw state            |
+| GET    | /api/draws/recent           | None | Recent draws                        |
+| GET    | /api/draws/user/:addr       | None | User's draw history                 |
+| GET    | /api/stats                  | None | Global statistics                   |
+| GET    | /api/metadata/:cardId       | None | ERC-721 metadata JSON               |
 
 ## x402 Payment Flow
 
@@ -68,7 +70,7 @@ curl https://oripax.example.com/api/stats
 2. Payment details specify: amount (e.g., $0.10), asset (USDT), network (X Layer / eip155:196), recipient wallet
 3. Sign a USDT payment transaction with your wallet
 4. Retry the draw endpoint with the signed payment in the `X-PAYMENT` header (base64-encoded)
-5. Server verifies payment via OKX x402 facilitator → executes draw → mints NFT → returns card
+5. Server verifies payment via OKX x402 facilitator → executes draw → returns card in `pending` status (NFT minted on keep, or refund on buyback)
 
 ### Payment response (402) example
 
@@ -89,11 +91,12 @@ curl https://oripax.example.com/api/stats
 }
 ```
 
-### Successful draw response example
+### Successful draw response example (pending — keep/buyback decision required)
 
 ```json
 {
   "success": true,
+  "drawId": 42,
   "card": {
     "cardId": 36,
     "rarity": "rare",
@@ -107,16 +110,57 @@ curl https://oripax.example.com/api/stats
   "lastOnePrize": null,
   "remainingSlots": 72,
   "totalSlots": 100,
-  "txHash": "0xabc123...",
-  "explorerUrl": "https://www.oklink.com/xlayer/tx/0xabc123..."
+  "status": "pending",
+  "decisionDeadline": "2025-01-15T12:05:00.000Z",
+  "buybackAmount": 0.05,
+  "txHash": null,
+  "explorerUrl": null,
+  "mintPending": true
 }
 ```
 
-### Last One win response example
+### Keep/Buyback decision
+
+After drawing, the user has **5 minutes** to keep or sell back the card.
+
+```bash
+# Keep the card (mints NFT)
+curl -X POST https://oripax.example.com/api/draws/decide/{drawId} \
+  -H "Content-Type: application/json" \
+  -d '{"action": "keep", "userAddress": "0x..."}'
+# Response: { success, action: "kept", txHash, tokenId, explorerUrl }
+
+# Buyback (sell back for partial USDT refund)
+curl -X POST https://oripax.example.com/api/draws/decide/{drawId} \
+  -H "Content-Type: application/json" \
+  -d '{"action": "buyback", "userAddress": "0x..."}'
+# Response: { success, action: "bought_back", refundAmount, refundTxHash }
+```
+
+**Buyback rates** (percentage of draw price refunded):
+| Rarity | Buyback Rate |
+|--------|-------------|
+| Common | 20% |
+| Uncommon | 30% |
+| Rare | 50% |
+| Ultra Rare | 80% |
+| Secret Rare | 90% |
+
+If the user doesn't decide within 5 minutes, the card is **auto-kept** and the NFT is minted.
+
+### Check pending draw status
+
+```bash
+curl https://oripax.example.com/api/draws/status/{drawId}?address=0x...
+# Response: { drawId, status, card, buybackAmount, decisionDeadline, timeRemainingMs }
+```
+
+### Last One win response example (auto-kept, no buyback option)
 
 ```json
 {
   "success": true,
+  "drawId": 100,
   "card": {
     "cardId": 12,
     "rarity": "common",
@@ -131,6 +175,9 @@ curl https://oripax.example.com/api/stats
   },
   "remainingSlots": 0,
   "totalSlots": 100,
+  "status": "kept",
+  "decisionDeadline": null,
+  "buybackAmount": null,
   "txHash": "0xdef456..."
 }
 ```
@@ -139,7 +186,8 @@ curl https://oripax.example.com/api/stats
 
 - **Finite pool**: Each oripa has a fixed number of slots (e.g., 100). When all slots are drawn, the oripa is SOLD OUT.
 - **Shifting odds**: As cards are drawn, the remaining pool composition changes. If all Commons are drawn first, later draws have much higher rare odds.
-- **Last One (ラストワン)**: Whoever draws the final slot wins a bonus grand prize NFT in addition to their regular card.
+- **Last One (ラストワン)**: Whoever draws the final slot wins a bonus grand prize NFT in addition to their regular card. Last One draws are always auto-kept (no buyback option).
+- **Keep / Buyback (買取)**: After drawing, users have 5 minutes to keep the card (mint as NFT) or sell it back for a partial USDT refund based on rarity. Bought-back cards return to the pool, keeping it alive longer. If no decision is made, the card is auto-kept.
 - **Transparency**: Pool composition and remaining cards are always queryable via the API. All pull history is stored on-chain as ERC-721 mint events.
 
 ## Pool status response example
@@ -189,8 +237,10 @@ OripaX is designed for autonomous agent interaction. A recommended agent workflo
 2. **Analyze**: `GET /api/oripa/:id/pool` → calculate expected value from remaining rarity distribution
 3. **Decide**: If `ultra_rare_remaining / total_remaining > your_threshold`, proceed
 4. **Pay & Draw**: `GET /api/draw/:oripaId` → handle 402 → sign x402 payment → retry with X-PAYMENT header
-5. **Monitor**: Watch for pools approaching "Last One" status (remaining ≤ 5) — these are high-value race opportunities
-6. **Compete**: Multiple agents can race for the Last One prize — only one wins
+5. **Keep or Buyback**: After drawing, evaluate the card. `POST /api/draws/decide/:drawId` with `{"action": "keep"}` to mint, or `{"action": "buyback"}` to sell back for partial refund. You have 5 minutes to decide.
+6. **Strategy**: Buy back low-value commons (20% refund) and reinvest. Keep rares and above. Calculate EV: if `buybackAmount > card_market_value`, sell back.
+7. **Monitor**: Watch for pools approaching "Last One" status (remaining ≤ 5) — these are high-value race opportunities
+8. **Compete**: Multiple agents can race for the Last One prize — only one wins
 
 ### Rate limits
 
@@ -200,14 +250,17 @@ OripaX is designed for autonomous agent interaction. A recommended agent workflo
 
 ### Error codes
 
-| HTTP Status | Meaning                                               |
-| ----------- | ----------------------------------------------------- |
-| 200         | Success — card drawn and minted                       |
-| 402         | Payment Required — x402 payment needed                |
-| 404         | Oripa not found                                       |
-| 410         | Oripa sold out (Gone)                                 |
-| 429         | Rate limited — too many draws per minute              |
-| 500         | Server error — draw may have succeeded, check tx hash |
+| HTTP Status | Meaning                                                  |
+| ----------- | -------------------------------------------------------- |
+| 200         | Success — card drawn (pending decision) or action done   |
+| 402         | Payment Required — x402 payment needed                   |
+| 403         | Not owner — wallet address doesn't match draw            |
+| 404         | Oripa or draw not found                                  |
+| 409         | Already decided — draw was already kept or bought back   |
+| 410         | Oripa sold out / decision window expired                 |
+| 429         | Rate limited — too many requests per minute              |
+| 500         | Server error — draw may have succeeded, check tx hash    |
+| 503         | Buyback temporarily unavailable (wallet out of USDT)     |
 
 ## Built With
 

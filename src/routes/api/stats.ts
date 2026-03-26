@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { getDb } from '~/server/db'
 import { getEnv, initEnv } from '~/server/env'
 import { getGlobalStats } from '~/server/oripa.server'
+import { jsonResponse, errorResponse } from '~/server/response'
 
 export const Route = createFileRoute('/api/stats')({
   server: {
@@ -11,15 +12,10 @@ export const Route = createFileRoute('/api/stats')({
           await initEnv()
           const env = getEnv()
           const db = getDb(env.DB)
-          const stats = await getGlobalStats(db)
-          return new Response(JSON.stringify(stats), {
-            headers: { 'Content-Type': 'application/json' },
-          })
+          return jsonResponse(await getGlobalStats(db))
         } catch (err) {
-          return new Response(
-            JSON.stringify({ error: err instanceof Error ? err.message : 'Failed to fetch stats' }),
-            { status: 500, headers: { 'Content-Type': 'application/json' } }
-          )
+          console.error('Stats error:', err)
+          return errorResponse('Internal server error')
         }
       },
     },

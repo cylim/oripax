@@ -1,118 +1,128 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { getDb } from '~/server/db'
 import { getEnv, initEnv } from '~/server/env'
-import { getOripaById, executeDraw, getPoolStatus } from '~/server/oripa.server'
+import { getOripaById, executeDraw, getPoolStatus, autoKeepExpiredDraws } from '~/server/oripa.server'
 import { create402Response, verifyX402Payment } from '~/server/x402.server'
 import { mintCardOnChain, mintLastOneOnChain } from '~/server/mint.server'
-import { XLAYER_EXPLORER } from '~/lib/constants'
+import { draws } from '~/server/schema'
+import { eq } from 'drizzle-orm'
+import { jsonResponse, errorResponse } from '~/server/response'
+import { checkRateLimit, getClientIp, rateLimitResponse } from '~/server/rate-limit'
+import { BUYBACK_WINDOW_MS } from '~/lib/constants'
 
 export const Route = createFileRoute('/api/draw/$oripaId')({
   server: {
     handlers: {
       GET: async ({ request, params }) => {
         try {
-        await initEnv()
-        const env = getEnv()
-        const db = getDb(env.DB)
-        const oripaId = parseInt(params.oripaId)
+          // Rate limit: 60 draw attempts per minute per IP
+          const ip = getClientIp(request)
+          const rl = checkRateLimit(`draw:${ip}`, 60, 60_000)
+          if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs)
 
-        // 1. Check oripa exists and is active
-        const oripa = await getOripaById(db, oripaId)
-        if (!oripa) {
-          return new Response(JSON.stringify({ error: 'Oripa not found' }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json' },
-          })
-        }
+          await initEnv()
+          const env = getEnv()
+          const db = getDb(env.DB)
 
-        if (oripa.status === 'sold_out') {
-          return new Response(JSON.stringify({ error: 'Oripa is sold out' }), {
-            status: 410,
-            headers: { 'Content-Type': 'application/json' },
-          })
-        }
-
-        // 2. Check for X-PAYMENT header
-        const xPayment = request.headers.get('X-PAYMENT')
-        if (!xPayment) {
-          // Return 402 with payment requirements
-          const pool = await getPoolStatus(db, oripaId)
-          return create402Response(
-            oripaId,
-            oripa.pricePerDraw,
-            pool?.remaining ?? 0,
-            oripa.name
-          )
-        }
-
-        // 3. Verify payment
-        let payment
-        try {
-          payment = await verifyX402Payment(xPayment)
-        } catch {
-          return new Response(
-            JSON.stringify({ error: 'Payment verification failed' }),
-            { status: 402, headers: { 'Content-Type': 'application/json' } }
-          )
-        }
-
-        // 4. Execute draw
-        let drawResult
-        try {
-          drawResult = await executeDraw(db, oripaId, payment.payerAddress)
-        } catch (err) {
-          const message = err instanceof Error ? err.message : 'Draw failed'
-          if (message === 'SOLD_OUT') {
-            return new Response(
-              JSON.stringify({ error: 'Oripa is sold out' }),
-              { status: 410, headers: { 'Content-Type': 'application/json' } }
-            )
+          // Validate param (#12)
+          const oripaId = parseInt(params.oripaId)
+          if (Number.isNaN(oripaId) || oripaId <= 0) {
+            return errorResponse('Invalid oripa ID', 400)
           }
-          return new Response(
-            JSON.stringify({ error: 'Draw failed, please retry' }),
-            { status: 500, headers: { 'Content-Type': 'application/json' } }
-          )
-        }
 
-        // 5. Mint NFT on-chain
-        const baseUrl = new URL(request.url).origin
-        let mintResult
-        try {
-          mintResult = await mintCardOnChain(
-            payment.payerAddress,
-            oripaId,
-            drawResult.card.id,
-            drawResult.card.rarity,
-            baseUrl
-          )
-        } catch {
-          // Mint failed but draw succeeded — return draw result with no txHash
-          mintResult = { txHash: null, tokenId: null, explorerUrl: null }
-        }
+          // 1. Check oripa exists and is active
+          const oripa = await getOripaById(db, oripaId)
+          if (!oripa) return errorResponse('Oripa not found', 404)
+          if (oripa.status === 'sold_out') return errorResponse('Oripa is sold out', 410)
 
-        // 6. If Last One, also mint the Last One prize
-        let lastOnePrize = null
-        if (drawResult.isLastOne) {
-          try {
-            const lastOneMint = await mintLastOneOnChain(
-              payment.payerAddress,
+          // 2. Check for X-PAYMENT header
+          const xPayment = request.headers.get('X-PAYMENT')
+          if (!xPayment) {
+            const pool = await getPoolStatus(db, oripaId)
+            return create402Response(
               oripaId,
-              baseUrl
+              oripa.pricePerDraw,
+              pool?.remaining ?? 0,
+              oripa.name
             )
-            lastOnePrize = {
-              ...oripa.lastOnePrize,
-              rarity: 'last_one',
-              txHash: lastOneMint.txHash,
-              explorerUrl: lastOneMint.explorerUrl,
-            }
-          } catch {
-            lastOnePrize = { ...oripa.lastOnePrize, rarity: 'last_one' }
           }
-        }
 
-        return new Response(
-          JSON.stringify({
+          // 3. Verify payment — checks on-chain receipt, amount, recipient, dedup (#1, #2, #6)
+          let payment
+          try {
+            payment = await verifyX402Payment(xPayment, oripa.pricePerDraw, db)
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Payment verification failed'
+            return errorResponse(msg, 402)
+          }
+
+          // 4. Auto-keep any expired pending draws (lazy cleanup)
+          const baseUrl = new URL(request.url).origin
+          autoKeepExpiredDraws(db, baseUrl).catch(() => {}) // fire-and-forget
+
+          // 5. Execute draw
+          let drawResult
+          try {
+            drawResult = await executeDraw(db, oripaId, payment.payerAddress, payment.txHash)
+          } catch (err) {
+            const message = err instanceof Error ? err.message : 'Draw failed'
+            if (message === 'SOLD_OUT') return errorResponse('Oripa is sold out', 410)
+            return errorResponse('Draw failed, please retry', 500)
+          }
+
+          // 6. If Last One, mint immediately (no buyback allowed)
+          let mintResult: { txHash: string | null; tokenId: number | null; explorerUrl: string | null } = {
+            txHash: null, tokenId: null, explorerUrl: null,
+          }
+          let lastOnePrize = null
+
+          if (drawResult.isLastOne) {
+            // Mint the drawn card
+            try {
+              mintResult = await mintCardOnChain(
+                payment.payerAddress,
+                oripaId,
+                drawResult.card.id,
+                drawResult.card.rarity,
+                baseUrl
+              )
+              if (mintResult.txHash) {
+                await db.update(draws)
+                  .set({ txHash: mintResult.txHash, mintedTokenId: mintResult.tokenId })
+                  .where(eq(draws.id, drawResult.drawId))
+              }
+            } catch {
+              // Mint failed but draw succeeded
+            }
+
+            // Mint Last One prize
+            try {
+              const lastOneMint = await mintLastOneOnChain(
+                payment.payerAddress,
+                oripaId,
+                baseUrl
+              )
+              const prize = oripa.lastOnePrize
+              lastOnePrize = {
+                ...prize,
+                rarity: 'last_one',
+                txHash: lastOneMint.txHash,
+                explorerUrl: lastOneMint.explorerUrl,
+              }
+            } catch {
+              const prize = oripa.lastOnePrize
+              lastOnePrize = { ...prize, rarity: 'last_one' }
+            }
+          }
+
+          // Calculate decision deadline for pending draws
+          const decisionDeadline = drawResult.isLastOne
+            ? null
+            : new Date(Date.now() + BUYBACK_WINDOW_MS).toISOString()
+
+          return jsonResponse({
             success: true,
+            drawId: drawResult.drawId,
             card: {
               cardId: drawResult.card.id,
               rarity: drawResult.card.rarity,
@@ -126,16 +136,16 @@ export const Route = createFileRoute('/api/draw/$oripaId')({
             lastOnePrize,
             remainingSlots: drawResult.remaining,
             totalSlots: oripa.totalSlots,
+            status: drawResult.isLastOne ? 'kept' : 'pending',
+            decisionDeadline,
+            buybackAmount: drawResult.isLastOne ? null : drawResult.buybackAmount,
             txHash: mintResult.txHash,
             explorerUrl: mintResult.explorerUrl,
-          }),
-          { headers: { 'Content-Type': 'application/json' } }
-        )
+            mintPending: drawResult.isLastOne ? !mintResult.txHash : true,
+          })
         } catch (err) {
-          return new Response(
-            JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }),
-            { status: 500, headers: { 'Content-Type': 'application/json' } }
-          )
+          console.error('Draw error:', err) // log internally only (#13)
+          return errorResponse('Internal server error', 500)
         }
       },
     },

@@ -42,22 +42,32 @@ export const oripaSlots = sqliteTable(
   ]
 )
 
-export const draws = sqliteTable('draws', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  oripaId: integer('oripa_id')
-    .notNull()
-    .references(() => oripas.id),
-  slotId: integer('slot_id')
-    .notNull()
-    .references(() => oripaSlots.id),
-  cardId: integer('card_id')
-    .notNull()
-    .references(() => cards.id),
-  rarity: text('rarity').notNull(),
-  userAddress: text('user_address').notNull(),
-  txHash: text('tx_hash'),
-  paymentTxHash: text('payment_tx_hash'),
-  isLastOne: integer('is_last_one', { mode: 'boolean' }).notNull().default(false),
-  mintedTokenId: integer('minted_token_id'),
-  createdAt: text('created_at').notNull().default(''),
-})
+export const draws = sqliteTable(
+  'draws',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    oripaId: integer('oripa_id')
+      .notNull()
+      .references(() => oripas.id),
+    slotId: integer('slot_id')
+      .notNull()
+      .references(() => oripaSlots.id),
+    cardId: integer('card_id')
+      .notNull()
+      .references(() => cards.id),
+    rarity: text('rarity').notNull(),
+    userAddress: text('user_address').notNull(),
+    txHash: text('tx_hash'),
+    paymentTxHash: text('payment_tx_hash'),
+    isLastOne: integer('is_last_one', { mode: 'boolean' }).notNull().default(false),
+    mintedTokenId: integer('minted_token_id'),
+    status: text('status').notNull().default('kept'), // pending | kept | bought_back
+    decidedAt: text('decided_at'),
+    buybackTxHash: text('buyback_tx_hash'),
+    buybackAmount: real('buyback_amount'),
+    createdAt: text('created_at').notNull().default(''),
+  },
+  (table) => [
+    uniqueIndex('payment_tx_hash_idx').on(table.paymentTxHash),
+  ]
+)

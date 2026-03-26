@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `payment_tx_hash_idx` ON `draws` (`payment_tx_hash`);

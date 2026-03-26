@@ -53,7 +53,7 @@ export function getEnv(): Env {
     OKX_API_KEY: '',
     OKX_SECRET_KEY: '',
     OKX_PASSPHRASE: '',
-    ADMIN_SECRET: 'dev-secret',
+    ADMIN_SECRET: '',
   }
 }
 

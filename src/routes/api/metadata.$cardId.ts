@@ -3,6 +3,7 @@ import { getDb } from '~/server/db'
 import { getEnv, initEnv } from '~/server/env'
 import { cards } from '~/server/schema'
 import { eq } from 'drizzle-orm'
+import { jsonResponse, errorResponse } from '~/server/response'
 
 export const Route = createFileRoute('/api/metadata/$cardId')({
   server: {
@@ -13,24 +14,19 @@ export const Route = createFileRoute('/api/metadata/$cardId')({
           const env = getEnv()
           const db = getDb(env.DB)
           const cardId = parseInt(params.cardId)
+          if (Number.isNaN(cardId) || cardId <= 0) return errorResponse('Invalid card ID', 400)
 
           const [card] = await db
             .select()
             .from(cards)
             .where(eq(cards.id, cardId))
 
-          if (!card) {
-            return new Response(JSON.stringify({ error: 'Card not found' }), {
-              status: 404,
-              headers: { 'Content-Type': 'application/json' },
-            })
-          }
+          if (!card) return errorResponse('Card not found', 404)
 
-          // Always use our proxy URL so NFT metadata points to our domain
           const baseUrl = new URL(request.url).origin
           const image = `${baseUrl}/api/card-image/${cardId}`
 
-          const metadata = {
+          return jsonResponse({
             name: card.name,
             description: card.description,
             image,
@@ -41,16 +37,10 @@ export const Route = createFileRoute('/api/metadata/$cardId')({
               { display_type: 'number', trait_type: 'Defense', value: card.defense },
               { trait_type: 'Set', value: card.setName },
             ],
-          }
-
-          return new Response(JSON.stringify(metadata), {
-            headers: { 'Content-Type': 'application/json' },
           })
         } catch (err) {
-          return new Response(
-            JSON.stringify({ error: err instanceof Error ? err.message : 'Failed to fetch metadata' }),
-            { status: 500, headers: { 'Content-Type': 'application/json' } }
-          )
+          console.error('Metadata error:', err)
+          return errorResponse('Internal server error')
         }
       },
     },

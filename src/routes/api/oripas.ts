@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { getDb } from '~/server/db'
 import { getEnv, initEnv } from '~/server/env'
 import { getActiveOripas } from '~/server/oripa.server'
+import { jsonResponse, errorResponse } from '~/server/response'
 
 export const Route = createFileRoute('/api/oripas')({
   server: {
@@ -11,15 +12,10 @@ export const Route = createFileRoute('/api/oripas')({
           await initEnv()
           const env = getEnv()
           const db = getDb(env.DB)
-          const oripas = await getActiveOripas(db)
-          return new Response(JSON.stringify(oripas), {
-            headers: { 'Content-Type': 'application/json' },
-          })
+          return jsonResponse(await getActiveOripas(db))
         } catch (err) {
-          return new Response(
-            JSON.stringify({ error: err instanceof Error ? err.message : 'Failed to fetch oripas' }),
-            { status: 500, headers: { 'Content-Type': 'application/json' } }
-          )
+          console.error('Oripas error:', err)
+          return errorResponse('Internal server error')
         }
       },
     },
