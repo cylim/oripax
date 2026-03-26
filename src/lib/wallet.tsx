@@ -185,6 +185,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         'eip155:196'
       )
 
+      console.log('[wallet] Payment tx sent:', txHash)
+
       return JSON.stringify({
         payerAddress: currentAddress,
         amount: priceStr,

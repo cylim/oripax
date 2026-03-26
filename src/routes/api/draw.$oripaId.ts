@@ -47,13 +47,13 @@ export const Route = createFileRoute('/api/draw/$oripaId')({
             )
           }
 
-          // 3. Verify payment — checks on-chain receipt, amount, recipient, dedup (#1, #2, #6)
+          // 3. Verify payment — checks on-chain receipt, amount, recipient, dedup
           let payment
           try {
             payment = await verifyX402Payment(xPayment, oripa.pricePerDraw, db)
           } catch (err) {
             const msg = err instanceof Error ? err.message : 'Payment verification failed'
-            return errorResponse(msg, 402)
+            return errorResponse(msg, 400)
           }
 
           // 4. Auto-keep any expired pending draws (lazy cleanup)

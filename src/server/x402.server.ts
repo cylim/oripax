@@ -55,7 +55,7 @@ export interface VerifiedPayment {
 }
 
 // ERC-20 Transfer(address,address,uint256) event topic
-const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7814a90d3ea3e44252318287461'
+const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
 
 interface RpcReceiptLog {
   address: string
@@ -96,24 +96,43 @@ export async function verifyX402Payment(
     throw new Error('Payment already used')
   }
 
-  // Fetch transaction receipt from X Layer RPC
+  // Wait for transaction receipt (X Layer ~3-5s block time)
   const env = getEnv()
-  const rpcResponse = await fetch(env.XLAYER_RPC, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      method: 'eth_getTransactionReceipt',
-      params: [payment.txHash],
-      id: 1,
-    }),
-  })
+  let receipt: RpcReceipt | null = null
+  console.log(`[x402] Verifying payment txHash: ${payment.txHash}`)
 
-  const rpcResult = (await rpcResponse.json()) as { result: RpcReceipt | null }
-  const receipt = rpcResult.result
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const rpcResponse = await fetch(env.XLAYER_RPC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'eth_getTransactionReceipt',
+        params: [payment.txHash],
+        id: 1,
+      }),
+    })
 
-  if (!receipt || receipt.status !== '0x1') {
-    throw new Error('Payment transaction not confirmed')
+    const rpcResult = (await rpcResponse.json()) as { result: RpcReceipt | null }
+    receipt = rpcResult.result
+
+    if (receipt) {
+      console.log(`[x402] Receipt found on attempt ${attempt + 1}, status: ${receipt.status}`)
+      break
+    }
+    console.log(`[x402] Attempt ${attempt + 1}: no receipt yet, waiting...`)
+
+    // Wait 2s before retrying (total max wait: ~20s)
+    await new Promise((r) => setTimeout(r, 2000))
+  }
+
+  if (!receipt) {
+    console.log('[x402] No receipt after 10 attempts')
+    throw new Error('Payment transaction not confirmed — tx may still be pending')
+  }
+  if (receipt.status !== '0x1') {
+    console.log(`[x402] Tx failed with status: ${receipt.status}`)
+    throw new Error('Payment transaction failed on-chain')
   }
 
   // Find the ERC-20 Transfer event log matching our USDC contract and payment wallet
@@ -121,15 +140,18 @@ export async function verifyX402Payment(
   const paymentWallet = env.PAYMENT_WALLET.toLowerCase()
 
   const transferLog = receipt.logs.find((log) => {
-    if (log.address.toLowerCase() !== usdtAddress) return false
-    if (log.topics[0] !== TRANSFER_TOPIC) return false
-    if (!log.topics[2]) return false
-    // topics[2] is the `to` address, zero-padded to 32 bytes
-    const toAddress = '0x' + log.topics[2].slice(26)
-    return toAddress.toLowerCase() === paymentWallet
+    const addrMatch = log.address.toLowerCase() === usdtAddress
+    const topicMatch = log.topics[0] === TRANSFER_TOPIC
+    const hasTo = !!log.topics[2]
+    const toAddress = hasTo ? '0x' + log.topics[2]!.slice(26) : ''
+    const toMatch = toAddress.toLowerCase() === paymentWallet
+    console.log(`[x402] Log check: addr=${addrMatch} topic=${topicMatch} hasTo=${hasTo} to=${toAddress} toMatch=${toMatch}`)
+    return addrMatch && topicMatch && hasTo && toMatch
   })
 
   if (!transferLog) {
+    console.log(`[x402] No matching transfer log. USDC: ${usdtAddress}, payTo: ${paymentWallet}`)
+    console.log(`[x402] Logs:`, JSON.stringify(receipt.logs.map(l => ({ addr: l.address, topics: l.topics, data: l.data }))))
     throw new Error('No valid USDC transfer to payment wallet found')
   }
 
