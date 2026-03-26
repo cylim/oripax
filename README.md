@@ -53,7 +53,8 @@ npx wrangler d1 create oripax-db
 bun run db:migrate:local
 
 # Seed the database
-# (start dev server first, then POST to /api/admin/seed)
+bun scripts/seed-pools.ts
+npx wrangler d1 execute oripax-db --local --file seed.sql
 
 # Start dev server
 bun dev

@@ -3,27 +3,36 @@ import { getDb } from '~/server/db'
 import { getEnv, initEnv } from '~/server/env'
 import { cards } from '~/server/schema'
 import { eq } from 'drizzle-orm'
-import { checkRateLimit, getClientIp, rateLimitResponse } from '~/server/rate-limit'
 
 const ALLOWED_IMAGE_HOSTS = ['images.pokemontcg.io']
+
+// In-memory image cache (per-isolate, survives across requests within same Worker instance)
+const imageCache = new Map<number, { body: ArrayBuffer; contentType: string }>()
 
 export const Route = createFileRoute('/api/card-image/$cardId')({
   server: {
     handlers: {
-      GET: async ({ request, params }) => {
+      GET: async ({ params }) => {
         try {
-          // Rate limit: 60 image requests per minute per IP
-          const rl = checkRateLimit(`img:${getClientIp(request)}`, 60, 60_000)
-          if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs)
-
-          await initEnv()
-          const env = getEnv()
-          const db = getDb(env.DB)
-
           const cardId = parseInt(params.cardId)
           if (Number.isNaN(cardId) || cardId <= 0) {
             return new Response('Invalid card ID', { status: 400 })
           }
+
+          // Serve from in-memory cache if available (no DB hit, no rate limit, no external fetch)
+          const cached = imageCache.get(cardId)
+          if (cached) {
+            return new Response(cached.body, {
+              headers: {
+                'Content-Type': cached.contentType,
+                'Cache-Control': 'public, max-age=86400, s-maxage=604800',
+              },
+            })
+          }
+
+          await initEnv()
+          const env = getEnv()
+          const db = getDb(env.DB)
 
           const [card] = await db
             .select({ imageUri: cards.imageUri })
@@ -34,7 +43,7 @@ export const Route = createFileRoute('/api/card-image/$cardId')({
             return new Response('Not found', { status: 404 })
           }
 
-          // SSRF protection — only allow whitelisted image hosts (#8)
+          // SSRF protection — only allow whitelisted image hosts
           let imageUrl: URL
           try {
             imageUrl = new URL(card.imageUri)
@@ -46,15 +55,23 @@ export const Route = createFileRoute('/api/card-image/$cardId')({
             return new Response('Image source not allowed', { status: 403 })
           }
 
-          // Proxy the image
+          // Fetch and cache
           const imageResponse = await fetch(card.imageUri)
           if (!imageResponse.ok) {
             return new Response('Image not available', { status: 502 })
           }
 
-          return new Response(imageResponse.body, {
+          const body = await imageResponse.arrayBuffer()
+          const contentType = imageResponse.headers.get('Content-Type') || 'image/png'
+
+          // Store in memory cache (cap at 500 entries to avoid memory bloat)
+          if (imageCache.size < 500) {
+            imageCache.set(cardId, { body, contentType })
+          }
+
+          return new Response(body, {
             headers: {
-              'Content-Type': imageResponse.headers.get('Content-Type') || 'image/png',
+              'Content-Type': contentType,
               'Cache-Control': 'public, max-age=86400, s-maxage=604800',
             },
           })

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as CollectionRouteImport } from './routes/collection'
+import { Route as CardsRouteImport } from './routes/cards'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -18,6 +19,7 @@ import { Route as OripaIdRouteImport } from './routes/oripa.$id'
 import { Route as ApiStatsRouteImport } from './routes/api/stats'
 import { Route as ApiOripasRouteImport } from './routes/api/oripas'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiCardsRouteImport } from './routes/api/cards'
 import { Route as AdminCreateRouteImport } from './routes/admin.create'
 import { Route as ApiOripaIdRouteImport } from './routes/api/oripa.$id'
 import { Route as ApiMetadataCardIdRouteImport } from './routes/api/metadata.$cardId'
@@ -47,6 +49,11 @@ const LeaderboardRoute = LeaderboardRouteImport.update({
 const CollectionRoute = CollectionRouteImport.update({
   id: '/collection',
   path: '/collection',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CardsRoute = CardsRouteImport.update({
+  id: '/cards',
+  path: '/cards',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -82,6 +89,11 @@ const ApiOripasRoute = ApiOripasRouteImport.update({
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCardsRoute = ApiCardsRouteImport.update({
+  id: '/api/cards',
+  path: '/api/cards',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCreateRoute = AdminCreateRouteImport.update({
@@ -188,9 +200,11 @@ const ApiAdminOripaIdRefillRoute = ApiAdminOripaIdRefillRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/cards': typeof CardsRoute
   '/collection': typeof CollectionRoute
   '/leaderboard': typeof LeaderboardRoute
   '/admin/create': typeof AdminCreateRoute
+  '/api/cards': typeof ApiCardsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/oripas': typeof ApiOripasRoute
   '/api/stats': typeof ApiStatsRoute
@@ -218,9 +232,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cards': typeof CardsRoute
   '/collection': typeof CollectionRoute
   '/leaderboard': typeof LeaderboardRoute
   '/admin/create': typeof AdminCreateRoute
+  '/api/cards': typeof ApiCardsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/oripas': typeof ApiOripasRoute
   '/api/stats': typeof ApiStatsRoute
@@ -250,9 +266,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/cards': typeof CardsRoute
   '/collection': typeof CollectionRoute
   '/leaderboard': typeof LeaderboardRoute
   '/admin/create': typeof AdminCreateRoute
+  '/api/cards': typeof ApiCardsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/oripas': typeof ApiOripasRoute
   '/api/stats': typeof ApiStatsRoute
@@ -283,9 +301,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/cards'
     | '/collection'
     | '/leaderboard'
     | '/admin/create'
+    | '/api/cards'
     | '/api/health'
     | '/api/oripas'
     | '/api/stats'
@@ -313,9 +333,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cards'
     | '/collection'
     | '/leaderboard'
     | '/admin/create'
+    | '/api/cards'
     | '/api/health'
     | '/api/oripas'
     | '/api/stats'
@@ -344,9 +366,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/cards'
     | '/collection'
     | '/leaderboard'
     | '/admin/create'
+    | '/api/cards'
     | '/api/health'
     | '/api/oripas'
     | '/api/stats'
@@ -376,8 +400,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  CardsRoute: typeof CardsRoute
   CollectionRoute: typeof CollectionRoute
   LeaderboardRoute: typeof LeaderboardRoute
+  ApiCardsRoute: typeof ApiCardsRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiOripasRoute: typeof ApiOripasRoute
   ApiStatsRoute: typeof ApiStatsRoute
@@ -415,6 +441,13 @@ declare module '@tanstack/react-router' {
       path: '/collection'
       fullPath: '/collection'
       preLoaderRoute: typeof CollectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cards': {
+      id: '/cards'
+      path: '/cards'
+      fullPath: '/cards'
+      preLoaderRoute: typeof CardsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -464,6 +497,13 @@ declare module '@tanstack/react-router' {
       path: '/api/health'
       fullPath: '/api/health'
       preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cards': {
+      id: '/api/cards'
+      path: '/api/cards'
+      fullPath: '/api/cards'
+      preLoaderRoute: typeof ApiCardsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/create': {
@@ -638,8 +678,10 @@ const ApiOripaIdRouteWithChildren = ApiOripaIdRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  CardsRoute: CardsRoute,
   CollectionRoute: CollectionRoute,
   LeaderboardRoute: LeaderboardRoute,
+  ApiCardsRoute: ApiCardsRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiOripasRoute: ApiOripasRoute,
   ApiStatsRoute: ApiStatsRoute,

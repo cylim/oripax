@@ -91,8 +91,8 @@ export const Route = createFileRoute('/api/admin/oripa/$id/refill')({
           rarity: slot.rarity,
         }))
 
-        for (let i = 0; i < slotValues.length; i += 10) {
-          await db.insert(oripaSlots).values(slotValues.slice(i, i + 10))
+        for (let i = 0; i < slotValues.length; i += 25) {
+          await db.insert(oripaSlots).values(slotValues.slice(i, i + 25))
         }
 
         // Update total slots

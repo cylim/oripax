@@ -43,25 +43,22 @@ This creates a local SQLite D1 database and applies the schema.
 
 ### 4. Seed the local database
 
-Start the dev server first, then seed:
-
 ```bash
-# Terminal 1: start dev server
-bun dev
+# Generate seed SQL (instant)
+bun scripts/seed-pools.ts
 
-# Terminal 2: seed the database (uses 'dev-secret' in local dev)
-curl -X POST http://localhost:5173/api/admin/seed \
-  -H "Authorization: Bearer dev-secret"
+# Execute against local D1 (sub-second)
+npx wrangler d1 execute oripax-db --local --file seed.sql
 ```
 
-You should see `{"status":"seeded","cards":1800,"oripas":3}`.
+You should see `11 commands executed successfully`.
 
-If you need to re-seed, delete the local D1 state and re-migrate:
+If you need to re-seed, clear and re-run:
 
 ```bash
-rm -rf .wrangler/state
-bun run db:migrate:local
-# Then re-seed via curl
+npx wrangler d1 execute oripax-db --local --command "DELETE FROM oripa_slots; DELETE FROM draws; DELETE FROM oripas; DELETE FROM cards;"
+bun scripts/seed-pools.ts
+npx wrangler d1 execute oripax-db --local --file seed.sql
 ```
 
 ### 5. Run the dev server
@@ -160,14 +157,21 @@ This runs `vite build` then `wrangler deploy`. Note the deployed URL (e.g., `htt
 
 ### 14. Seed the production database
 
-Replace the URL and secret with your values:
-
 ```bash
-curl -X POST https://oripax.YOUR_SUBDOMAIN.workers.dev/api/admin/seed \
-  -H "Authorization: Bearer YOUR_ADMIN_SECRET"
+# Generate seed SQL
+bun scripts/seed-pools.ts
+
+# Execute against remote D1
+npx wrangler d1 execute oripax-db --remote --file seed.sql
 ```
 
-Expected response: `{"status":"seeded","cards":1800,"oripas":3}`
+Verify:
+
+```bash
+curl https://oripax.YOUR_SUBDOMAIN.workers.dev/api/admin/seed \
+  -H "Authorization: Bearer YOUR_ADMIN_SECRET"
+# Expected: {"cards":1800,"oripas":3,"seeded":true}
+```
 
 ### 15. Verify deployment
 

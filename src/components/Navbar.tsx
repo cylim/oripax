@@ -29,6 +29,13 @@ export function Navbar() {
             Lobby
           </Link>
           <Link
+            to="/cards"
+            className="text-sm text-white/70 hover:text-pachinko-gold transition-colors"
+            activeProps={{ className: 'text-sm text-pachinko-gold neon-glow' }}
+          >
+            Cards
+          </Link>
+          <Link
             to="/collection"
             className="text-sm text-white/70 hover:text-pachinko-gold transition-colors"
             activeProps={{ className: 'text-sm text-pachinko-gold neon-glow' }}

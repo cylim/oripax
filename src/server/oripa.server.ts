@@ -46,23 +46,27 @@ export async function createOripaPool(db: Database, config: CreateOripaConfig) {
     }
   }
 
-  // Fisher-Yates shuffle with unbiased crypto randomness (#10)
+  // Fisher-Yates shuffle with unbiased crypto randomness
   for (let i = slots.length - 1; i > 0; i--) {
     const j = secureRandomInt(i + 1)
     ;[slots[i]!, slots[j]!] = [slots[j]!, slots[i]!]
   }
 
-  // Insert slots
-  const slotValues = slots.map((slot, index) => ({
-    oripaId: oripa!.id,
-    slotIndex: index,
-    cardId: slot.cardId,
-    rarity: slot.rarity,
-  }))
-
-  // Insert in small batches (D1 has ~100 bind param limit)
-  for (let i = 0; i < slotValues.length; i += 10) {
-    await db.insert(oripaSlots).values(slotValues.slice(i, i + 10))
+  // Insert slots using raw SQL multi-value INSERTs (200 per statement)
+  const SLOT_BATCH = 200
+  for (let i = 0; i < slots.length; i += SLOT_BATCH) {
+    const batch = slots.slice(i, i + SLOT_BATCH)
+    const values = batch
+      .map(
+        (slot, j) =>
+          `(${oripa!.id}, ${i + j}, ${slot.cardId}, '${slot.rarity}')`
+      )
+      .join(',')
+    await db.run(
+      sql.raw(
+        `INSERT INTO oripa_slots (oripa_id, slot_index, card_id, rarity) VALUES ${values}`
+      )
+    )
   }
 
   return oripa!

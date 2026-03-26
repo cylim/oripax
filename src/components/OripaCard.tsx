@@ -38,7 +38,16 @@ export function OripaCard({ card, size = 'md' }: OripaCardProps) {
     >
       {/* Card art area */}
       <div className="absolute inset-0 bg-gradient-to-br from-pachinko-bg to-white/5 flex items-center justify-center">
-        <div className="text-6xl">🎴</div>
+        {card.imageUri ? (
+          <img
+            src={card.imageUri}
+            alt={card.name}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="text-6xl">🎴</div>
+        )}
       </div>
 
       {/* Card info overlay */}

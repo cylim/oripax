@@ -5,7 +5,7 @@ interface LastOneAlertProps {
 }
 
 export function LastOneAlert({ remaining }: LastOneAlertProps) {
-  if (remaining > 5) return null
+  if (remaining === 0 || remaining > 5) return null
 
   const isUrgent = remaining <= 1
 

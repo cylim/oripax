@@ -9,7 +9,7 @@ interface VendingMachineProps {
     pricePerDraw: number
     status: string
     remaining: number
-    lastOnePrize: { name: string; imageUri: string }
+    lastOnePrize: { cardId: number; name: string; imageUri: string }
   }
 }
 
@@ -39,13 +39,18 @@ export function VendingMachine({ oripa }: VendingMachineProps) {
         )}
 
         {/* Top prize display */}
-        <div className="aspect-[5/7] bg-gradient-to-br from-pachinko-bg to-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
-          <div className="text-center p-4">
-            <div className="text-4xl mb-2">🎴</div>
+        <div className="aspect-[5/7] bg-gradient-to-br from-pachinko-bg to-white/5 rounded flex items-center justify-center mb-3 overflow-hidden relative">
+          <img
+            src={`/api/card-image/${oripa.lastOnePrize.cardId}`}
+            alt={oripa.lastOnePrize.name}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-2 text-center">
             <p className="text-xs text-pachinko-gold/80 truncate">
               {oripa.lastOnePrize.name}
             </p>
-            <p className="text-[10px] text-pachinko-pink mt-1">ラストワン賞</p>
+            <p className="text-[10px] text-pachinko-pink mt-0.5">ラストワン賞</p>
           </div>
         </div>
 
