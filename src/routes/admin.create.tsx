@@ -135,7 +135,7 @@ function CreatePoolPage() {
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Price per Draw (USDT)</label>
+            <label className="block text-xs text-gray-500 mb-1">Price per Draw (USDC)</label>
             <input
               type="number"
               step="0.001"

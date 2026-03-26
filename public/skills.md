@@ -29,7 +29,7 @@ Returns full pool status: remaining slots, rarity breakdown, current odds, recen
 curl -i https://oripax.example.com/api/draw/{oripaId}
 # Response: HTTP 402, body contains payment requirements
 
-# Step 2: Sign USDT payment (your wallet signs the x402 payload)
+# Step 2: Sign USDC payment (your wallet signs the x402 payload)
 # Step 3: Retry with payment proof
 curl https://oripax.example.com/api/draw/{oripaId} \
   -H "X-PAYMENT: <base64-encoded-payment-payload>"
@@ -56,7 +56,7 @@ curl https://oripax.example.com/api/stats
 | GET    | /api/oripas           | None | List active oripas            |
 | GET    | /api/oripa/:id        | None | Single oripa detail with pool |
 | GET    | /api/oripa/:id/pool   | None | Pool status with live odds    |
-| GET    | /api/draw/:oripaId          | x402 | Draw a card (pay USDT)              |
+| GET    | /api/draw/:oripaId          | x402 | Draw a card (pay USDC)              |
 | POST   | /api/draws/decide/:drawId   | None | Keep or buyback a pending draw      |
 | GET    | /api/draws/status/:drawId   | None | Check pending draw state            |
 | GET    | /api/draws/recent           | None | Recent draws                        |
@@ -67,8 +67,8 @@ curl https://oripax.example.com/api/stats
 ## x402 Payment Flow
 
 1. Call draw endpoint without payment → receive HTTP 402 + payment details
-2. Payment details specify: amount (e.g., $0.10), asset (USDT), network (X Layer / eip155:196), recipient wallet
-3. Sign a USDT payment transaction with your wallet
+2. Payment details specify: amount (e.g., $0.10), asset (USDC), network (X Layer / eip155:196), recipient wallet
+3. Sign a USDC payment transaction with your wallet
 4. Retry the draw endpoint with the signed payment in the `X-PAYMENT` header (base64-encoded)
 5. Server verifies payment via OKX x402 facilitator → executes draw → returns card in `pending` status (NFT minted on keep, or refund on buyback)
 
@@ -83,7 +83,7 @@ curl https://oripax.example.com/api/stats
       "scheme": "exact",
       "price": "$0.10",
       "network": "eip155:196",
-      "asset": "USDT",
+      "asset": "USDC",
       "payTo": "0x..."
     }
   ],
@@ -130,7 +130,7 @@ curl -X POST https://oripax.example.com/api/draws/decide/{drawId} \
   -d '{"action": "keep", "userAddress": "0x..."}'
 # Response: { success, action: "kept", txHash, tokenId, explorerUrl }
 
-# Buyback (sell back for partial USDT refund)
+# Buyback (sell back for partial USDC refund)
 curl -X POST https://oripax.example.com/api/draws/decide/{drawId} \
   -H "Content-Type: application/json" \
   -d '{"action": "buyback", "userAddress": "0x..."}'
@@ -187,7 +187,7 @@ curl https://oripax.example.com/api/draws/status/{drawId}?address=0x...
 - **Finite pool**: Each oripa has a fixed number of slots (e.g., 100). When all slots are drawn, the oripa is SOLD OUT.
 - **Shifting odds**: As cards are drawn, the remaining pool composition changes. If all Commons are drawn first, later draws have much higher rare odds.
 - **Last One (ラストワン)**: Whoever draws the final slot wins a bonus grand prize NFT in addition to their regular card. Last One draws are always auto-kept (no buyback option).
-- **Keep / Buyback (買取)**: After drawing, users have 5 minutes to keep the card (mint as NFT) or sell it back for a partial USDT refund based on rarity. Bought-back cards return to the pool, keeping it alive longer. If no decision is made, the card is auto-kept.
+- **Keep / Buyback (買取)**: After drawing, users have 5 minutes to keep the card (mint as NFT) or sell it back for a partial USDC refund based on rarity. Bought-back cards return to the pool, keeping it alive longer. If no decision is made, the card is auto-kept.
 - **Transparency**: Pool composition and remaining cards are always queryable via the API. All pull history is stored on-chain as ERC-721 mint events.
 
 ## Pool status response example
@@ -226,7 +226,7 @@ curl https://oripax.example.com/api/draws/status/{drawId}?address=0x...
 - **RPC**: https://rpc.xlayer.tech
 - **Explorer**: https://www.oklink.com/xlayer
 - **Gas token**: OKB
-- **Payment token**: USDT (gas-free via x402 on X Layer)
+- **Payment token**: USDC (gas-free via x402 on X Layer)
 - **NFT standard**: ERC-721 (OripaX contract)
 
 ## For AI Agents
@@ -260,7 +260,7 @@ OripaX is designed for autonomous agent interaction. A recommended agent workflo
 | 410         | Oripa sold out / decision window expired                 |
 | 429         | Rate limited — too many requests per minute              |
 | 500         | Server error — draw may have succeeded, check tx hash    |
-| 503         | Buyback temporarily unavailable (wallet out of USDT)     |
+| 503         | Buyback temporarily unavailable (wallet out of USDC)     |
 
 ## Admin Portal
 

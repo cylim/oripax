@@ -81,7 +81,7 @@ function PoolManagePage() {
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Price per Draw</span>
-              <span className="text-white">${pool.pricePerDraw} USDT</span>
+              <span className="text-white">${pool.pricePerDraw} USDC</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Total Draws</span>

@@ -109,11 +109,11 @@ Save the deployed contract address. Then update it in two places:
 
 ### 9. Set up the payment wallet
 
-Choose a wallet address that will receive USDT payments from draws. Update `PAYMENT_WALLET` in `wrangler.jsonc`.
+Choose a wallet address that will receive USDC payments from draws. Update `PAYMENT_WALLET` in `wrangler.jsonc`.
 
-### 10. Verify USDT contract address
+### 10. Verify USDC contract address
 
-The USDT contract on X Layer is set to `0x1E4a5963aBFD975d8c9021ce480b42188849D41d` in `src/lib/constants.ts`.
+The USDC contract on X Layer is set to `0x1E4a5963aBFD975d8c9021ce480b42188849D41d` in `src/lib/constants.ts`.
 
 Verify this is correct on [OKLink X Layer Explorer](https://www.oklink.com/xlayer/token/0x1E4a5963aBFD975d8c9021ce480b42188849D41d) before production use.
 
@@ -193,7 +193,7 @@ Then open the app in a browser:
 3. After connecting, navbar shows your address
 4. Navigate to Collection — shows "No cards yet"
 5. Refresh — wallet stays connected (session restore)
-6. Click into an oripa, click Draw — wallet prompts USDT transfer
+6. Click into an oripa, click Draw — wallet prompts USDC transfer
 7. After approval — pachinko ball drops, card reveals
 
 ---
@@ -248,7 +248,7 @@ Alternatively, use the **Admin Portal** at `/admin` to create new pools with cus
 | ------------------ | ---------------------------------- |
 | `XLAYER_RPC`       | X Layer RPC endpoint               |
 | `CONTRACT_ADDRESS` | Deployed OripaX ERC-721 contract   |
-| `PAYMENT_WALLET`   | Wallet that receives USDT payments |
+| `PAYMENT_WALLET`   | Wallet that receives USDC payments |
 
 ### Wrangler secrets (encrypted, NOT committed)
 
@@ -267,8 +267,8 @@ Alternatively, use the **Admin Portal** at `/admin` to create new pools with cus
 | Constant                | Description                                      |
 | ----------------------- | ------------------------------------------------ |
 | `CONTRACT_ADDRESS`      | Must match wrangler.jsonc                        |
-| `USDT_CONTRACT_ADDRESS` | USDT token on X Layer — verify before production |
-| `POOL_PRICES`           | Draw prices in USDT per pool tier                |
+| `USDC_CONTRACT_ADDRESS` | USDC token on X Layer — verify before production |
+| `POOL_PRICES`           | Draw prices in USDC per pool tier                |
 
 ---
 

@@ -8,11 +8,14 @@
 	"vars": {
 		"XLAYER_RPC": "https://rpc.xlayer.tech",
 		"CONTRACT_ADDRESS": "0x0000000000000000000000000000000000000000",
-		"PAYMENT_WALLET": "0x0000000000000000000000000000000000000000",
-		"ADMIN_SECRET": "dev-secret",
-		"ADMIN_WALLETS": "",
-		"JWT_SECRET": "dev-jwt-secret-change-me"
+		"PAYMENT_WALLET": "0x4E2Ad94D21A35424f46A814Aa4eA5aB40D641f46",
 	},
+	"routes": [
+		{
+			"pattern": "oripax.predick.fun",
+			"custom_domain": true
+		}
+	],
 	"d1_databases": [
 		{
 			"binding": "DB",

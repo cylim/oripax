@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract OripaX is ERC721URIStorage, Ownable {
     uint256 private _nextTokenId;
+    address public minter;
 
     struct CardData {
         uint256 oripaId;
@@ -30,8 +31,22 @@ contract OripaX is ERC721URIStorage, Ownable {
         uint256 indexed oripaId
     );
 
-    constructor() ERC721("OripaX", "ORIPAX") Ownable(msg.sender) {
+    event MinterUpdated(address indexed oldMinter, address indexed newMinter);
+
+    modifier onlyMinter() {
+        require(msg.sender == minter, "OripaX: caller is not the minter");
+        _;
+    }
+
+    constructor(address _minter) ERC721("OripaX", "ORIPAX") Ownable(msg.sender) {
         _nextTokenId = 1;
+        minter = _minter;
+        emit MinterUpdated(address(0), _minter);
+    }
+
+    function setMinter(address _minter) external onlyOwner {
+        emit MinterUpdated(minter, _minter);
+        minter = _minter;
     }
 
     function mintCard(
@@ -40,7 +55,7 @@ contract OripaX is ERC721URIStorage, Ownable {
         uint256 cardNumber,
         uint8 rarity,
         string memory uri
-    ) external onlyOwner returns (uint256) {
+    ) external onlyMinter returns (uint256) {
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
@@ -60,7 +75,7 @@ contract OripaX is ERC721URIStorage, Ownable {
         address to,
         uint256 oripaId,
         string memory uri
-    ) external onlyOwner returns (uint256) {
+    ) external onlyMinter returns (uint256) {
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);

@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { PaymentRequirements } from '~/server/x402.server'
-import { USDT_CONTRACT_ADDRESS } from './constants'
+import { USDC_CONTRACT_ADDRESS } from './constants'
 
 // Lazy-import OKX SDK types
 type OKXUniversalConnectUIType = import('@okxconnect/ui').OKXUniversalConnectUI
@@ -155,7 +155,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const accept = requirements.accepts[0]
       if (!accept) throw new Error('No payment method available')
 
-      // Parse price: "$0.10" → 0.10 → 100000 (6 decimals for USDT)
+      // Parse price: "$0.10" → 0.10 → 100000 (6 decimals for USDC)
       const priceStr = accept.price.replace('$', '')
       const priceNum = parseFloat(priceStr)
       const amount = BigInt(Math.round(priceNum * 1e6))
@@ -176,7 +176,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           params: [
             {
               from: currentAddress,
-              to: USDT_CONTRACT_ADDRESS,
+              to: USDC_CONTRACT_ADDRESS,
               data,
               value: '0x0',
             },

@@ -40,7 +40,7 @@ export function DrawButton({ price, disabled, loading, soldOut, onClick }: DrawB
         'SOLD OUT'
       ) : (
         <>
-          DRAW — ${price.toFixed(2)} USDT
+          DRAW — ${price.toFixed(2)} USDC
         </>
       )}
     </button>

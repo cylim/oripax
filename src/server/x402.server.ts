@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { getEnv } from './env'
 import { draws } from './schema'
-import { USDT_CONTRACT_ADDRESS } from '~/lib/constants'
+import { USDC_CONTRACT_ADDRESS } from '~/lib/constants'
 import type { Database } from './db'
 
 export interface PaymentRequirements {
@@ -32,7 +32,7 @@ export function create402Response(
         scheme: 'exact',
         price: `$${price.toFixed(2)}`,
         network: 'eip155:196',
-        asset: 'USDT',
+        asset: 'USDC',
         payTo: env.PAYMENT_WALLET,
       },
     ],
@@ -116,8 +116,8 @@ export async function verifyX402Payment(
     throw new Error('Payment transaction not confirmed')
   }
 
-  // Find the ERC-20 Transfer event log matching our USDT contract and payment wallet
-  const usdtAddress = USDT_CONTRACT_ADDRESS.toLowerCase()
+  // Find the ERC-20 Transfer event log matching our USDC contract and payment wallet
+  const usdtAddress = USDC_CONTRACT_ADDRESS.toLowerCase()
   const paymentWallet = env.PAYMENT_WALLET.toLowerCase()
 
   const transferLog = receipt.logs.find((log) => {
@@ -130,10 +130,10 @@ export async function verifyX402Payment(
   })
 
   if (!transferLog) {
-    throw new Error('No valid USDT transfer to payment wallet found')
+    throw new Error('No valid USDC transfer to payment wallet found')
   }
 
-  // Verify the transfer amount (USDT has 6 decimals)
+  // Verify the transfer amount (USDC has 6 decimals)
   const actualAmount = BigInt(transferLog.data)
   const expectedAmount = BigInt(Math.round(expectedPrice * 1e6))
   if (actualAmount < expectedAmount) {

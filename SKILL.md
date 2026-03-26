@@ -29,7 +29,7 @@ Returns full pool status: remaining slots, rarity breakdown, current odds, recen
 curl -i https://oripax.example.com/api/draw/{oripaId}
 # Response: HTTP 402, body contains payment requirements
 
-# Step 2: Sign USDT payment (your wallet signs the x402 payload)
+# Step 2: Sign USDC payment (your wallet signs the x402 payload)
 # Step 3: Retry with payment proof
 curl https://oripax.example.com/api/draw/{oripaId} \
   -H "X-PAYMENT: <base64-encoded-payment-payload>"
@@ -56,7 +56,7 @@ curl https://oripax.example.com/api/stats
 | GET    | /api/oripas                 | None | List active oripas             |
 | GET    | /api/oripa/:id              | None | Single oripa detail with pool  |
 | GET    | /api/oripa/:id/pool         | None | Pool status with live odds     |
-| GET    | /api/draw/:oripaId          | x402 | Draw a card (pay USDT)         |
+| GET    | /api/draw/:oripaId          | x402 | Draw a card (pay USDC)         |
 | POST   | /api/draws/decide/:drawId   | None | Keep or buyback a drawn card   |
 | GET    | /api/draws/status/:drawId   | None | Check pending draw status      |
 | GET    | /api/draws/recent           | None | Recent draws                   |
@@ -80,8 +80,8 @@ curl https://oripax.example.com/api/stats
 ## x402 Payment Flow
 
 1. Call draw endpoint without payment → receive HTTP 402 + payment details
-2. Payment details specify: amount (e.g., $0.10), asset (USDT), network (X Layer / eip155:196), recipient
-3. Sign a USDT payment transaction with your wallet
+2. Payment details specify: amount (e.g., $0.10), asset (USDC), network (X Layer / eip155:196), recipient
+3. Sign a USDC payment transaction with your wallet
 4. Retry the draw endpoint with the signed payment in the `X-PAYMENT` header (base64-encoded)
 5. Server verifies payment via OKX x402 facilitator → executes draw → mints NFT → returns card
 
@@ -90,7 +90,7 @@ curl https://oripax.example.com/api/stats
 After drawing a card, users have a **5-minute decision window**:
 
 - **Keep** (`POST /api/draws/decide/:drawId` with `{"action":"keep","userAddress":"0x..."}`) — mints the card as an ERC-721 NFT
-- **Buyback** (`POST /api/draws/decide/:drawId` with `{"action":"buyback","userAddress":"0x..."}`) — sells the card back for a partial USDT refund; the slot returns to the pool
+- **Buyback** (`POST /api/draws/decide/:drawId` with `{"action":"buyback","userAddress":"0x..."}`) — sells the card back for a partial USDC refund; the slot returns to the pool
 
 Buyback rates by rarity: Common 20%, Uncommon 30%, Rare 50%, Ultra Rare 80%, Secret Rare 90%.
 
@@ -135,7 +135,7 @@ The admin portal at `/admin` lets whitelisted wallet addresses manage pools via 
 - **RPC**: https://rpc.xlayer.tech
 - **Explorer**: https://www.oklink.com/xlayer
 - **Gas token**: OKB
-- **Payment token**: USDT (gas-free via x402 on X Layer)
+- **Payment token**: USDC (gas-free via x402 on X Layer)
 - **NFT contract**: ERC-721 (OripaX)
 
 ## For AI Agents

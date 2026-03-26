@@ -414,7 +414,7 @@ export async function buybackDraw(
   const rate = BUYBACK_RATES[draw.rarity] ?? 0
   const refundAmount = oripa.pricePerDraw * rate
 
-  // Send USDT refund on-chain
+  // Send USDC refund on-chain
   const { txHash: refundTxHash } = await sendUsdtRefund(draw.userAddress, refundAmount)
 
   // Optimistic update draw status

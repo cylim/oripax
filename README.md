@@ -1,14 +1,14 @@
 # OripaX — On-Chain Gacha on X Layer
 
-OripaX is a Japanese-style Oripa (オリパ / Original Pack) gacha system deployed on X Layer (chain ID 196). Users pay x402 micropayments in USDT to draw cards from finite pools. Cards are minted as ERC-721 NFTs.
+OripaX is a Japanese-style Oripa (オリパ / Original Pack) gacha system deployed on X Layer (chain ID 196). Users pay x402 micropayments in USDC to draw cards from finite pools. Cards are minted as ERC-721 NFTs.
 
 ## Features
 
 - **Pachinko-style draw UI** — Matter.js physics ball drop, GSAP card reveals, particle explosions for rare pulls
-- **x402 micropayments** — Gas-free USDT payments on X Layer via the x402 HTTP protocol
+- **x402 micropayments** — Gas-free USDC payments on X Layer via the x402 HTTP protocol
 - **Finite pools with shifting odds** — As cards are drawn, remaining odds change in real-time
 - **Last One (ラストワン) mechanic** — The final draw from any pool wins a grand prize NFT
-- **Keep / Buyback system** — 5-minute window to sell cards back for partial USDT refunds (20–90% by rarity)
+- **Keep / Buyback system** — 5-minute window to sell cards back for partial USDC refunds (20–90% by rarity)
 - **API-first** — Every feature is an HTTP endpoint. AI agents and bots can draw cards programmatically
 - **Admin portal** — Wallet-authenticated admin panel at `/admin` for pool creation, refill, and reset
 - **OKX Wallet Connect** — Connect via OKX Universal Connect SDK with dark theme
@@ -23,7 +23,7 @@ OripaX is a Japanese-style Oripa (オリパ / Original Pack) gacha system deploy
 | ORM | Drizzle ORM |
 | Blockchain | X Layer (chain 196) via ethers.js v6 |
 | Wallet | OKX Universal Connect SDK |
-| Payments | x402 protocol (USDT, gas-free) |
+| Payments | x402 protocol (USDC, gas-free) |
 | Styling | Tailwind CSS v4 |
 | Animation | GSAP, Matter.js, tsParticles |
 
@@ -118,11 +118,11 @@ See [SKILL.md](./SKILL.md) for the full integration guide.
 ## Architecture
 
 ```
-User clicks Draw → x402 payment flow → OKX wallet signs USDT transfer
+User clicks Draw → x402 payment flow → OKX wallet signs USDC transfer
     → Server verifies payment → Core engine draws from pool
     → Card revealed → User has 5 min to Keep or Buyback
     → Keep: ERC-721 minted on X Layer
-    → Buyback: USDT refund sent, slot returns to pool
+    → Buyback: USDC refund sent, slot returns to pool
 
 Admin connects wallet → Signs challenge → JWT issued
     → /admin portal: Create pools, refill slots, reset sold-out pools
