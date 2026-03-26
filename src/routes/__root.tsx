@@ -87,6 +87,13 @@ function RootComponent() {
           <main className="max-w-7xl mx-auto px-4 py-6">
             <Outlet />
           </main>
+          {/* Fixed demo footer */}
+          <div className="fixed bottom-0 inset-x-0 z-50 bg-pachinko-gold/10 border-t border-pachinko-gold/30 backdrop-blur-sm">
+            <div className="flex items-center justify-center gap-2 py-1.5 px-4 group cursor-default select-none">
+              <span className="text-pachinko-gold font-bold text-xs tracking-widest uppercase">Demo</span>
+              <span className="text-white/40 text-[10px]">— Test phase only, no real cards are drawn</span>
+            </div>
+          </div>
         </WalletProvider>
       </QueryClientProvider>
     </RootDocument>

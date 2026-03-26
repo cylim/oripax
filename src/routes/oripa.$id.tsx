@@ -94,9 +94,6 @@ function OripaDrawPage() {
         <p className="text-white/50 text-sm">
           ${oripa.pricePerDraw.toFixed(2)} USDC per draw
         </p>
-        <p className="text-yellow-400/70 text-xs mt-1">
-          Demo pricing — real pools would be 50-500x higher
-        </p>
       </div>
 
       {/* Last One Alert */}

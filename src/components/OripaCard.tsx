@@ -8,8 +8,6 @@ interface OripaCardProps {
     rarity: string
     imageUri: string
     element: string
-    attack: number
-    defense: number
   }
   size?: 'sm' | 'md' | 'lg'
 }
@@ -61,10 +59,6 @@ export function OripaCard({ card, size = 'md' }: OripaCardProps) {
             {RARITY_LABELS[rarity] || rarity}
           </span>
           <span className="text-[10px] text-white/50">{card.element}</span>
-        </div>
-        <div className="flex gap-3 mt-1 text-[10px] text-white/70">
-          <span>ATK {card.attack}</span>
-          <span>DEF {card.defense}</span>
         </div>
       </div>
 

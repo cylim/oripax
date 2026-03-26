@@ -27,15 +27,14 @@ export const Route = createFileRoute('/api/metadata/$cardId')({
           const image = `${baseUrl}/api/card-image/${cardId}`
 
           return jsonResponse({
-            name: card.name,
-            description: card.description,
+            name: `${card.name}`,
+            description: `${card.description}\n\nThis is a demo NFT minted during the OripaX test phase. It does not represent any real-world asset or hold any monetary value.`,
             image,
             attributes: [
               { trait_type: 'Rarity', value: card.rarity },
               { trait_type: 'Element', value: card.element },
-              { display_type: 'number', trait_type: 'Attack', value: card.attack },
-              { display_type: 'number', trait_type: 'Defense', value: card.defense },
               { trait_type: 'Set', value: card.setName },
+              { trait_type: 'Status', value: 'Demo' },
             ],
           })
         } catch (err) {
