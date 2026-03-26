@@ -3,6 +3,7 @@ import {
   createRootRoute,
   HeadContent,
   Scripts,
+  Link,
 } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { Navbar } from '~/components/Navbar'
@@ -19,6 +20,7 @@ const queryClient = new QueryClient({
 })
 
 export const Route = createRootRoute({
+  notFoundComponent: NotFound,
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
@@ -57,6 +59,22 @@ function RootDocument({ children }: { children: ReactNode }) {
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function NotFound() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+      <div className="text-6xl mb-4">🎰</div>
+      <h1 className="text-3xl font-bold text-pachinko-gold neon-glow mb-2">404</h1>
+      <p className="text-white/50 mb-6">This page doesn't exist</p>
+      <Link
+        to="/"
+        className="px-6 py-2 bg-pachinko-gold/10 border border-pachinko-gold/50 rounded-lg text-pachinko-gold text-sm font-semibold hover:bg-pachinko-gold/20 transition-all"
+      >
+        Back to Lobby
+      </Link>
+    </div>
   )
 }
 
