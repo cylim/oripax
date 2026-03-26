@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { soundManager } from '~/lib/sounds'
 import { useWallet } from '~/lib/wallet'
 import { formatAddress } from '~/lib/utils'
@@ -9,6 +9,19 @@ export function Navbar() {
     typeof window !== 'undefined' ? soundManager?.muted ?? false : false
   )
   const { address, connected, connecting, connect, disconnect } = useWallet()
+  const [walletOpen, setWalletOpen] = useState(false)
+  const walletRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (walletRef.current && !walletRef.current.contains(e.target as Node)) {
+        setWalletOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/10 backdrop-blur-xl bg-pachinko-bg/80">
@@ -20,41 +33,13 @@ export function Navbar() {
           <span className="text-xs text-pachinko-pink opacity-70">オリパX</span>
         </Link>
 
-        <div className="flex items-center gap-6">
-          <Link
-            to="/"
-            className="text-sm text-white/70 hover:text-pachinko-gold transition-colors"
-            activeProps={{ className: 'text-sm text-pachinko-gold neon-glow' }}
-          >
-            Lobby
-          </Link>
-          <Link
-            to="/cards"
-            className="text-sm text-white/70 hover:text-pachinko-gold transition-colors"
-            activeProps={{ className: 'text-sm text-pachinko-gold neon-glow' }}
-          >
-            Cards
-          </Link>
-          <Link
-            to="/collection"
-            className="text-sm text-white/70 hover:text-pachinko-gold transition-colors"
-            activeProps={{ className: 'text-sm text-pachinko-gold neon-glow' }}
-          >
-            Collection
-          </Link>
+        <div className="flex items-center gap-4">
           <Link
             to="/leaderboard"
-            className="text-sm text-white/70 hover:text-pachinko-gold transition-colors"
+            className="hidden sm:block text-sm text-white/70 hover:text-pachinko-gold transition-colors"
             activeProps={{ className: 'text-sm text-pachinko-gold neon-glow' }}
           >
             Leaderboard
-          </Link>
-          <Link
-            to="/verify"
-            className="text-sm text-white/70 hover:text-pachinko-gold transition-colors"
-            activeProps={{ className: 'text-sm text-pachinko-gold neon-glow' }}
-          >
-            Fair
           </Link>
 
           <button
@@ -71,16 +56,55 @@ export function Navbar() {
           </button>
 
           {connected ? (
-            <div className="flex items-center gap-2">
-              <span className="text-pachinko-gold text-sm font-mono">
-                {formatAddress(address!)}
-              </span>
+            <div className="relative" ref={walletRef}>
               <button
-                onClick={disconnect}
-                className="px-3 py-1.5 bg-red-500/20 border border-red-500/50 rounded text-red-400 text-sm hover:bg-red-500/30 transition-colors"
+                onClick={() => setWalletOpen((o) => !o)}
+                className="px-4 py-1.5 bg-pachinko-gold/10 border border-pachinko-gold/50 rounded text-pachinko-gold text-sm font-mono hover:bg-pachinko-gold/20 transition-colors"
               >
-                Disconnect
+                {formatAddress(address!)}
               </button>
+              {walletOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-pachinko-bg border border-white/10 rounded-lg shadow-xl overflow-hidden">
+                  <Link
+                    to="/leaderboard"
+                    onClick={() => setWalletOpen(false)}
+                    className="block sm:hidden w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 hover:text-pachinko-gold transition-colors"
+                  >
+                    Leaderboard
+                  </Link>
+                  <Link
+                    to="/info"
+                    search={{ tab: 'cards', drawId: '' }}
+                    onClick={() => setWalletOpen(false)}
+                    className="block w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 hover:text-pachinko-gold transition-colors"
+                  >
+                    Cards
+                  </Link>
+                  <Link
+                    to="/info"
+                    search={{ tab: 'collection', drawId: '' }}
+                    onClick={() => setWalletOpen(false)}
+                    className="block w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 hover:text-pachinko-gold transition-colors"
+                  >
+                    Collection
+                  </Link>
+                  <Link
+                    to="/info"
+                    search={{ tab: 'fair', drawId: '' }}
+                    onClick={() => setWalletOpen(false)}
+                    className="block w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/5 hover:text-pachinko-gold transition-colors"
+                  >
+                    Verify
+                  </Link>
+                  <div className="border-t border-white/10" />
+                  <button
+                    onClick={() => { disconnect(); setWalletOpen(false) }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <button

@@ -89,11 +89,13 @@ function RootComponent() {
           </main>
           {/* Fixed demo footer */}
           <div className="fixed bottom-0 inset-x-0 z-50 bg-pachinko-gold/10 border-t border-pachinko-gold/30 backdrop-blur-sm">
-            <div className="flex items-center justify-center gap-2 py-1.5 px-4 group cursor-default select-none">
-              <span className="text-pachinko-gold font-bold text-xs tracking-widest uppercase">Demo</span>
-              <span className="text-white/40 text-[10px]">— Test phase only, no real cards are drawn</span>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 py-1.5 px-4 cursor-default select-none">
+              <span className="text-pachinko-gold font-bold text-[10px] sm:text-xs tracking-widest uppercase">Demo</span>
+              <span className="text-white/40 text-[9px] sm:text-[10px] text-center">Test phase only, no real cards are drawn</span>
             </div>
           </div>
+          {/* Spacer to prevent content from being hidden behind fixed footer */}
+          <div className="h-12 sm:h-10" />
         </WalletProvider>
       </QueryClientProvider>
     </RootDocument>

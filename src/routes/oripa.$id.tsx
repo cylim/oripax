@@ -287,7 +287,7 @@ function DecisionModal({
             </p>
 
             <a
-              href={`/verify?drawId=${drawResult.drawId}`}
+              href={`/info?tab=fair&drawId=${drawResult.drawId}`}
               target="_blank"
               rel="noopener noreferrer"
               className="block text-center text-[10px] text-pachinko-blue/60 hover:text-pachinko-blue"

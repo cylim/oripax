@@ -9,10 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
-import { Route as CollectionRouteImport } from './routes/collection'
-import { Route as CardsRouteImport } from './routes/cards'
+import { Route as InfoRouteImport } from './routes/info'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -43,24 +41,14 @@ import { Route as ApiAdminAuthChallengeRouteImport } from './routes/api/admin.au
 import { Route as ApiAdminOripaIdResetRouteImport } from './routes/api/admin.oripa.$id.reset'
 import { Route as ApiAdminOripaIdRefillRouteImport } from './routes/api/admin.oripa.$id.refill'
 
-const VerifyRoute = VerifyRouteImport.update({
-  id: '/verify',
-  path: '/verify',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CollectionRoute = CollectionRouteImport.update({
-  id: '/collection',
-  path: '/collection',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CardsRoute = CardsRouteImport.update({
-  id: '/cards',
-  path: '/cards',
+const InfoRoute = InfoRouteImport.update({
+  id: '/info',
+  path: '/info',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -212,10 +200,8 @@ const ApiAdminOripaIdRefillRoute = ApiAdminOripaIdRefillRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/cards': typeof CardsRoute
-  '/collection': typeof CollectionRoute
+  '/info': typeof InfoRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/verify': typeof VerifyRoute
   '/admin/create': typeof AdminCreateRoute
   '/api/cards': typeof ApiCardsRoute
   '/api/health': typeof ApiHealthRoute
@@ -246,10 +232,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/cards': typeof CardsRoute
-  '/collection': typeof CollectionRoute
+  '/info': typeof InfoRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/verify': typeof VerifyRoute
   '/admin/create': typeof AdminCreateRoute
   '/api/cards': typeof ApiCardsRoute
   '/api/health': typeof ApiHealthRoute
@@ -282,10 +266,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/cards': typeof CardsRoute
-  '/collection': typeof CollectionRoute
+  '/info': typeof InfoRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/verify': typeof VerifyRoute
   '/admin/create': typeof AdminCreateRoute
   '/api/cards': typeof ApiCardsRoute
   '/api/health': typeof ApiHealthRoute
@@ -319,10 +301,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
-    | '/cards'
-    | '/collection'
+    | '/info'
     | '/leaderboard'
-    | '/verify'
     | '/admin/create'
     | '/api/cards'
     | '/api/health'
@@ -353,10 +333,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/cards'
-    | '/collection'
+    | '/info'
     | '/leaderboard'
-    | '/verify'
     | '/admin/create'
     | '/api/cards'
     | '/api/health'
@@ -388,10 +366,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
-    | '/cards'
-    | '/collection'
+    | '/info'
     | '/leaderboard'
-    | '/verify'
     | '/admin/create'
     | '/api/cards'
     | '/api/health'
@@ -424,10 +400,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
-  CardsRoute: typeof CardsRoute
-  CollectionRoute: typeof CollectionRoute
+  InfoRoute: typeof InfoRoute
   LeaderboardRoute: typeof LeaderboardRoute
-  VerifyRoute: typeof VerifyRoute
   ApiCardsRoute: typeof ApiCardsRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiOripasRoute: typeof ApiOripasRoute
@@ -455,13 +429,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/verify': {
-      id: '/verify'
-      path: '/verify'
-      fullPath: '/verify'
-      preLoaderRoute: typeof VerifyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/leaderboard': {
       id: '/leaderboard'
       path: '/leaderboard'
@@ -469,18 +436,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/collection': {
-      id: '/collection'
-      path: '/collection'
-      fullPath: '/collection'
-      preLoaderRoute: typeof CollectionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cards': {
-      id: '/cards'
-      path: '/cards'
-      fullPath: '/cards'
-      preLoaderRoute: typeof CardsRouteImport
+    '/info': {
+      id: '/info'
+      path: '/info'
+      fullPath: '/info'
+      preLoaderRoute: typeof InfoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -718,10 +678,8 @@ const ApiOripaIdRouteWithChildren = ApiOripaIdRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
-  CardsRoute: CardsRoute,
-  CollectionRoute: CollectionRoute,
+  InfoRoute: InfoRoute,
   LeaderboardRoute: LeaderboardRoute,
-  VerifyRoute: VerifyRoute,
   ApiCardsRoute: ApiCardsRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiOripasRoute: ApiOripasRoute,
